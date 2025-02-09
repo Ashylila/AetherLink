@@ -1,13 +1,13 @@
+**WIP**
 # AetherLink
 
 ![AetherLink Banner](image_url)
 
-AetherLink is a plugin that bridges in-game chat in Final Fantasy XIV with Discord, allowing you to receive in-game messages from a Discord bot and reply to them via in-game commands.
+AetherLink is a plugin that bridges in-game chat in Final Fantasy XIV with Discord, allowing you to receive in-game messages from a Discord bot and reply to them via slashcommands on discord.
 
 ## Features
-- Receive Discord messages in FFXIV chat
-- Reply to Discord messages using in-game commands
-- Supports Free Company, Linkshell, and Party chat integration
+- Receive FFXIV messages in discord
+- Reply to FFXIV messages using slashcommands
 
 ## Installation
 
@@ -18,7 +18,7 @@ AetherLink is a plugin that bridges in-game chat in Final Fantasy XIV with Disco
 ### Steps
 1. Open Dalamud settings in-game.
 2. Navigate to the **Experimental** tab and add the following repository:
-   - `https://your-repository-link.com`
+   - `https://raw.githubusercontent.com/Ashylila/AshPluggyRepo/refs/heads/main/repo.json`
 3. Click **Save**.
 4. Open the **Plugin Installer** in Dalamud.
 5. Search for **AetherLink** and click **Install**.
