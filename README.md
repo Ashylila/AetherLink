@@ -5,9 +5,8 @@
 AetherLink is a plugin that bridges in-game chat in Final Fantasy XIV with Discord, allowing you to receive in-game messages from a Discord bot and reply to them via in-game commands.
 
 ## Features
-- Receive Discord messages in FFXIV chat
-- Reply to Discord messages using in-game commands
-- Supports Free Company, Linkshell, and Party chat integration
+- Receive FFXIV messages in discord
+- Reply to FFXIV messages using slashcommands
 
 ## Installation
 
