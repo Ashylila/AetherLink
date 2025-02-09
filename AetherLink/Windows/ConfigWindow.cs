@@ -14,12 +14,12 @@ public class ConfigWindow : Window, IDisposable
     private Configuration Configuration;
     private string discordUserId = string.Empty;
     private string discordBotToken = string.Empty;
-    public ConfigWindow(Plugin plugin) : base("ConfigWindow###ID")
+    public ConfigWindow(Plugin plugin) : base("AetherLink Config###ID")
     {
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(500, 115);
+        Size = new Vector2(450, 115);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;

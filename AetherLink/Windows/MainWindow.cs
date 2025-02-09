@@ -15,11 +15,7 @@ public class MainWindow : Window, IDisposable
     public MainWindow(Plugin plugin)
         : base("AetherLink##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
-        SizeConstraints = new WindowSizeConstraints
-        {
-            MinimumSize = new Vector2(100, 50),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
-        };
+        Size = new Vector2(150, 100);
         Plugin = plugin;
         configuration = plugin.Configuration;
     }
@@ -36,7 +32,11 @@ public class MainWindow : Window, IDisposable
 
         ImGui.Spacing();
         ImGui.Spacing();
-        ImGui.TextUnformatted("Bot Status: " + Plugin.DiscordHandler.isConnected.ToString());
+        ImGui.TextUnformatted("Bot status:  ");
+        ImGui.SameLine();
+        ImGui.PushStyleColor(ImGuiCol.Text, Plugin.DiscordHandler.isConnected ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1));
+        ImGui.TextUnformatted(Plugin.DiscordHandler.isConnected ? "Running" : "Stopped");
+        ImGui.PopStyleColor();
 
     }
 }
