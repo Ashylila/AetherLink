@@ -1,11 +1,29 @@
-{
-    "Author": "Ashy",
-    "Name": "AetherLink",
-    "Punchline": "Seamlessly connect your FFXIV in-game chat with Discord!",
-    "Description": "AetherLink allows you to connect your FFXIV in-game chat with Discord, enabling you to receive and send messages between the two platforms.",
-    "ApplicableVersion": "any",
-    "Tags": [
-        "discord",
-        "messaging"
-    ]
-}
+  {
+        "Author": "Ashy",
+        "Name": "AetherLink",
+        "Punchline": "Seamless FFXIV-Discord Chat Integration",
+        "Description": "A plugin that connects Final Fantasy XIV in-game chat with Discord, allowing real-time message exchange between the two platforms.",
+        "Tags": [
+            "Discord",
+            "Chat",
+            "Integration",
+            "FFXIV",
+            "Messaging",
+            "Communication"
+        ],
+        "InternalName": "AetherLink",
+        "AssemblyVersion": "0.1",
+        "TestingAssemblyVersion": "0.1",
+        "RepoUrl": "https://github.com/Ashylila/AetherLink",
+        "ApplicableVersion": "any",
+        "DalamudApiLevel": 11,
+        "TestingDalamudApiLevel": 11,
+        "IsHide": "False",
+        "IsTestingExclusive": "False",
+        "DownloadCount": 0,
+        "LastUpdate": 0,
+        "DownloadLinkInstall": "https://github.com/Ashylila/AetherLink/releases/download/v0.1/latest.zip",
+        "DownloadLinkUpdate": "https://github.com/Ashylila/AetherLink/releases/download/v0.1/latest.zip",
+        "DownloadLinkTesting": "https://github.com/Ashylila/AetherLink/releases/download/v0.1/latest.zip",
+        "IconUrl": "https://raw.githubusercontent.com/Ashylila/AshPluggyRepo/refs/heads/main/atherlink%20(1).png"
+    }
