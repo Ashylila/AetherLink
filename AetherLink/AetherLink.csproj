@@ -6,5 +6,5 @@
     <PackageProjectUrl>https://github.com/Ashylila/AetherLink</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     <IsPackable>false</IsPackable>
-  </PropertyGroup>\
+  </PropertyGroup>
 </Project>
