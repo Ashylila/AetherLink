@@ -1,9 +1,8 @@
 using AetherLink.DalamudServices;
-using AetherLink.Utility;
 using Dalamud.Plugin.Services;
 using System;
 
-namespace Aetherlink.Utility
+namespace AetherLink.Utility
 {
     /// <summary>
     /// Class <c>ChatMessageSender</c> is a utility class that sends messages to the chat.

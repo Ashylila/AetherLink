@@ -6,6 +6,8 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using AetherLink.Windows;
 using AetherLink.DalamudServices;
+using AetherLink.Discord;
+using Discord.Rest;
 
 namespace AetherLink;
 
@@ -20,6 +22,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private const string CommandName = "/aetherlink";
 
+    private DiscordHandler DiscordHandler;
     public Configuration Configuration { get; init; }
 
     public readonly WindowSystem WindowSystem = new("AetherLink");
@@ -30,6 +33,8 @@ public sealed class Plugin : IDalamudPlugin
     {
         Svc.Init(PluginInterface);
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+
+        DiscordHandler = new DiscordHandler(this);
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
@@ -48,7 +53,12 @@ public sealed class Plugin : IDalamudPlugin
 
         PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
 
-        Log.Information($"===A cool log message from {PluginInterface.Manifest.Name}===");
+        Init();
+    }
+
+    private async void Init()
+    {
+        await DiscordHandler._init();
     }
 
     public void Dispose()

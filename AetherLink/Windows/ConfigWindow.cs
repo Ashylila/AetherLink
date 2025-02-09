@@ -8,10 +8,8 @@ namespace AetherLink.Windows;
 public class ConfigWindow : Window, IDisposable
 {
     private Configuration Configuration;
-
-    // We give this window a constant ID using ###
-    // This allows for labels being dynamic, like "{FPS Counter}fps###XYZ counter window",
-    // and the window ID will always be "###XYZ counter window" for ImGui
+    private string discordUserId;
+    private string discordBotToken;
     public ConfigWindow(Plugin plugin) : base("A Wonderful Configuration Window###With a constant ID")
     {
         Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
@@ -40,20 +38,31 @@ public class ConfigWindow : Window, IDisposable
 
     public override void Draw()
     {
-        // can't ref a property, so use a local copy
-        var configValue = Configuration.SomePropertyToBeSavedAndWithADefault;
-        if (ImGui.Checkbox("Random Config Bool", ref configValue))
-        {
-            Configuration.SomePropertyToBeSavedAndWithADefault = configValue;
-            // can save immediately on change, if you don't want to provide a "Save and Close" button
-            Configuration.Save();
-        }
-
         var movable = Configuration.IsConfigWindowMovable;
         if (ImGui.Checkbox("Movable Config Window", ref movable))
         {
             Configuration.IsConfigWindowMovable = movable;
             Configuration.Save();
+        }
+        ImGui.Text("Discord Bot Token");
+        ImGui.SameLine();
+        ImGui.InputText("##botToken", ref discordBotToken, 500);
+
+        if (ImGui.Button("Save"))
+        {
+            Configuration.DiscordToken = discordBotToken;
+            Configuration.Save();
+            discordBotToken = string.Empty;
+
+        }
+
+        ImGui.Text("Your Discord userId:"); ImGui.SameLine();
+        ImGui.InputText("##DiscordUserID", ref discordUserId, 100);
+        if (ImGui.Button("Save"))
+        {
+            Configuration.DiscordUserId = ulong.Parse(discordUserId);
+            Configuration.Save();
+            discordUserId = string.Empty;
         }
     }
 }
