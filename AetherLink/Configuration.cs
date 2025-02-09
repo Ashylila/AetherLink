@@ -41,7 +41,7 @@ public class Configuration : IPluginConfiguration
             }
         }
     }
-
+    public bool IsRunning { get; set; } = false;
     // the below exist just to make saving less cumbersome
     public void Save()
     {

@@ -53,6 +53,7 @@ namespace AetherLink.Discord
             });
             configuration.OnDiscordTokenChanged += TokenChanged;
             chatGui = Svc.Chat;
+            configuration.IsRunning = isConnected;
         }
         public async void TokenChanged(string changedValue)
         {
@@ -257,7 +258,7 @@ namespace AetherLink.Discord
         }
         private async Task HandleAutoComplete(SocketAutocompleteInteraction interaction)
         {
-            if (interaction.Data.CommandName == "reply" && interaction.Data.Current.Name == "target")
+            if (interaction.Data.CommandName == "tell" && interaction.Data.Current.Name == "target")
             {
                 string userInput = interaction.Data.Current.Value.ToString();
 

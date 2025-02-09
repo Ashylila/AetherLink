@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using AetherLink.DalamudServices;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using ImGuiNET;
@@ -18,7 +19,7 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(400, 200);
+        Size = new Vector2(500, 115);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;
@@ -34,25 +35,20 @@ public class ConfigWindow : Window, IDisposable
     public override void Draw()
     {
         
-        ImGui.Text("Discord Bot Token");
+        ImGui.Text("Discord Bot Token:   ");
         ImGui.SameLine();
-        ImGui.InputText("##botToken", ref discordBotToken, 500);
-
-        if (ImGui.Button("Save"))
-        {
-            Configuration.DiscordToken = discordBotToken;
-            Configuration.Save();
-            discordBotToken = string.Empty;
-
-        }
-
+        ImGui.SetNextItemWidth(300);
+        ImGui.InputText("##botToken", ref discordBotToken, 80);
         ImGui.Text("Your Discord userId:"); ImGui.SameLine();
-        ImGui.InputText("##DiscordUserID", ref discordUserId, 100);
-        if (ImGui.Button("Save Id"))
+        ImGui.SetNextItemWidth(300);
+        ImGui.InputText("##DiscordUserID", ref discordUserId, 20);
+        if (ImGui.Button("Save"))
         {
             Configuration.DiscordUserId = ulong.Parse(discordUserId);
             Log.Debug($"DiscordUserId: {Configuration.DiscordUserId}");
+            Configuration.DiscordToken = discordBotToken;
             Configuration.Save();
+            discordBotToken = string.Empty;
             discordUserId = string.Empty;
         }
     }

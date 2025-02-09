@@ -22,7 +22,7 @@ public sealed class Plugin : IDalamudPlugin
 
     private const string CommandName = "/aetherlink";
 
-    private DiscordHandler DiscordHandler;
+    public DiscordHandler DiscordHandler;
     public Configuration Configuration { get; init; }
 
     public readonly WindowSystem WindowSystem = new("AetherLink");
