@@ -14,7 +14,6 @@ AetherLink is a plugin that bridges in-game chat in Final Fantasy XIV with Disco
 ### Requirements
 - Final Fantasy XIV installed
 - Discord bot set up with necessary permissions
-- .NET Runtime installed (if required for the plugin)
 
 ### Steps
 1. Open Dalamud settings in-game.
