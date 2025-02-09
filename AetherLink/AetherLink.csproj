@@ -8,6 +8,9 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="AetherLink.json" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Discord.Net" Version="3.17.1" />
   </ItemGroup>
 </Project>

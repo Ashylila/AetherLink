@@ -1,0 +1,11 @@
+{
+    "Author": "Ashy",
+    "Name": "AetherLink",
+    "Punchline": "Seamlessly connect your FFXIV in-game chat with Discord!",
+    "Description": "AetherLink allows you to connect your FFXIV in-game chat with Discord, enabling you to receive and send messages between the two platforms.",
+    "ApplicableVersion": "any",
+    "Tags": [
+        "discord",
+        "messaging"
+    ]
+}

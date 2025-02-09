@@ -67,7 +67,7 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow.Dispose();
         MainWindow.Dispose();
-
+        DiscordHandler.Dispose();
         CommandManager.RemoveHandler(CommandName);
     }
 

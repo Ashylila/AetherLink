@@ -1,21 +1,24 @@
 using System;
 using System.Numerics;
+using AetherLink.DalamudServices;
 using Dalamud.Interface.Windowing;
+using Dalamud.Plugin.Services;
 using ImGuiNET;
 
 namespace AetherLink.Windows;
 
 public class ConfigWindow : Window, IDisposable
 {
+    private IPluginLog Log => Svc.Log;
     private Configuration Configuration;
-    private string discordUserId;
-    private string discordBotToken;
-    public ConfigWindow(Plugin plugin) : base("A Wonderful Configuration Window###With a constant ID")
+    private string discordUserId = string.Empty;
+    private string discordBotToken = string.Empty;
+    public ConfigWindow(Plugin plugin) : base("ConfigWindow###ID")
     {
-        Flags = ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
+        Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(232, 90);
+        Size = new Vector2(400, 200);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;
@@ -25,25 +28,12 @@ public class ConfigWindow : Window, IDisposable
 
     public override void PreDraw()
     {
-        // Flags must be added or removed before Draw() is being called, or they won't apply
-        if (Configuration.IsConfigWindowMovable)
-        {
-            Flags &= ~ImGuiWindowFlags.NoMove;
-        }
-        else
-        {
-            Flags |= ImGuiWindowFlags.NoMove;
-        }
+       
     }
 
     public override void Draw()
     {
-        var movable = Configuration.IsConfigWindowMovable;
-        if (ImGui.Checkbox("Movable Config Window", ref movable))
-        {
-            Configuration.IsConfigWindowMovable = movable;
-            Configuration.Save();
-        }
+        
         ImGui.Text("Discord Bot Token");
         ImGui.SameLine();
         ImGui.InputText("##botToken", ref discordBotToken, 500);
@@ -58,9 +48,10 @@ public class ConfigWindow : Window, IDisposable
 
         ImGui.Text("Your Discord userId:"); ImGui.SameLine();
         ImGui.InputText("##DiscordUserID", ref discordUserId, 100);
-        if (ImGui.Button("Save"))
+        if (ImGui.Button("Save Id"))
         {
             Configuration.DiscordUserId = ulong.Parse(discordUserId);
+            Log.Debug($"DiscordUserId: {Configuration.DiscordUserId}");
             Configuration.Save();
             discordUserId = string.Empty;
         }

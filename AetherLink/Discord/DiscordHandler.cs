@@ -182,6 +182,12 @@ namespace AetherLink.Discord
         }
         private async Task SendEmbedToDM(Embed embed)
         {
+            if(configuration.DiscordUserId == 0)
+            {
+                Logger.Error("Discord user id is not set, cannot send message");
+                chatGui.Print("Discord user id is not set, please set it in the config window");
+                return;
+            }
             try
             {
                 var user = await this.discordClient.GetUserAsync(configuration.DiscordUserId);
@@ -201,7 +207,6 @@ namespace AetherLink.Discord
                 else
                 {
                     Logger.Error("User not found");
-                    chatGui.Print("Set your Discord userid in the settings");
                 }
             }
             catch (Exception ex)
@@ -240,8 +245,8 @@ namespace AetherLink.Discord
             {
 
                 await discordClient.CreateGlobalApplicationCommandAsync(tellCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(sayCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(fcCommand.Build());
+                await discordClient.CreateGlobalApplicationCommandAsync(sayCommand.Build());
+                await discordClient.CreateGlobalApplicationCommandAsync(fcCommand.Build());
                 await discordClient.CreateGlobalApplicationCommandAsync(replyCommand.Build());
                 Logger.Debug("commands registered");
             }
