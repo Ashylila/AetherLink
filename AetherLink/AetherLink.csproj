@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Dalamud.NET.SDK/11.0.0">
+  <PropertyGroup>
+    <Version>0.0.0.1</Version>
+    <Description>Seamlessly connect your FFXIV in-game chat with Discord! Receive messages from a Discord bot directly in-game and reply using simple chat commands. Keep your Free Company, Linkshell, or party in sync, no matter where you are..</Description>
+    <PackageProjectUrl>https://github.com/Ashylila/AetherLink</PackageProjectUrl>
+    <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>\
+</Project>
