@@ -19,7 +19,7 @@ namespace AetherLink.Utility
         /// Method <c>SendMessage</c> sends a message into the chat.
         /// </summary>
         /// <param name="message"></param>
-        public void SendMessage(string message)
+        public void SendSayMessage(string message)
         {
             // Use the /say command to send a message that others can see
             string command = $"/say {message}";
@@ -37,6 +37,23 @@ namespace AetherLink.Utility
             }
         }
 
+        public void SendChatMessage(string message)
+        {
+            // Use the /say command to send a message that others can see
+            string command = $"{message}";
+
+            try
+            {
+                Svc.Framework.RunOnFrameworkThread(() =>
+                {
+                    _chat.SendMessage(command);
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.Error(ex, "Failed to send message");
+            }
+        }
         /// <summary>
         /// Method <c>SendShoutMessage</c> sends a message into the shout chat.
         /// </summary>
