@@ -63,6 +63,7 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
+        this.Configuration.Save();
         WindowSystem.RemoveAllWindows();
 
         ConfigWindow.Dispose();

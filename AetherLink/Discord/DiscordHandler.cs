@@ -14,6 +14,7 @@ using AetherLink.Constants;
 using System.Text;
 using System.IO;
 using System.ComponentModel.DataAnnotations;
+using System.Xml.Linq;
 
 
 namespace AetherLink.Discord
@@ -26,28 +27,13 @@ namespace AetherLink.Discord
         private readonly DiscordSocketClient discordClient;
         private readonly Configuration configuration;
         private readonly IChatGui chatGui;
-        StringBuilder messages = new();
-        private readonly List<XivChatType> chatTypes = [
-            XivChatType.FreeCompany,
-            XivChatType.Ls1,
-            XivChatType.Ls2,
-            XivChatType.Ls3,
-            XivChatType.Ls4,
-            XivChatType.Ls5,
-            XivChatType.Ls6,
-            XivChatType.Ls7,
-            XivChatType.Ls8,
-            XivChatType.CrossLinkShell1,
-            XivChatType.CrossLinkShell2,
-            XivChatType.CrossLinkShell3,
-            XivChatType.TellIncoming,
-            XivChatType.TellOutgoing,
-            XivChatType.Say];
+        private readonly Plugin plugin;
 
         public bool isConnected => this.discordClient.ConnectionState == ConnectionState.Connected;
         public ulong UserId => this.discordClient.CurrentUser.Id;
         public DiscordHandler(Plugin plugin)
         {
+            this.plugin = plugin;
             configuration = plugin.Configuration;
             chat = new ChatMessageSender();
             this.discordClient = new(new DiscordSocketConfig()
@@ -69,7 +55,7 @@ namespace AetherLink.Discord
             if (string.IsNullOrEmpty(configuration.DiscordToken))
             {
                 Logger.Error("Discord token is not set, cannot start bot");
-                chatGui.Print("Discord token is not set, cannot start bot");
+                chatGui.Print("Discord token is not set, cannot start bot", messageTag:"AetherLink", tagColor: 51447);
                 return;
             }
             try
@@ -83,7 +69,7 @@ namespace AetherLink.Discord
             catch (Exception ex)
             {
                 Logger.Error(ex, "Token invalid, cannot start bot.");
-                chatGui.Print("Token invalid, cannot start bot.");
+                chatGui.Print("Token invalid, cannot start bot.",messageTag: "AetherLink", tagColor: 51447);
             }
             Logger.Info("DiscordHandler initialized");
         }
@@ -127,7 +113,7 @@ namespace AetherLink.Discord
                             return;
                         case "removechatflag":
                             var flagToRemove = command.Data.Options.FirstOrDefault(x => x.Name == "flag")?.Value as string;
-                            if (!EnumHelper.IsValidEnumMember<XivChatType>(flagToRemove) || (EnumHelper.TryConvertToEnum<XivChatType>(flagToRemove, out var result) && !chatTypes.Contains(result)))
+                            if (!EnumHelper.IsValidEnumMember<XivChatType>(flagToRemove) || (EnumHelper.TryConvertToEnum<XivChatType>(flagToRemove, out var result) && !plugin.Configuration.ChatTypes.Contains(result)))
                             {
                                 await interaction.RespondAsync("Invalid flag or it is already inactive.", ephemeral: true);
                                 await Task.Delay(5000);
@@ -135,14 +121,14 @@ namespace AetherLink.Discord
                                 return;
                             }
                             Logger.Debug($"Flag: {flagToRemove}");
-                            chatTypes.Remove(result);
+                            plugin.Configuration.ChatTypes.Remove(result);
                             await interaction.RespondAsync($"Flag {flagToRemove} has been removed", ephemeral: true);
                             await Task.Delay(5000);
                             await interaction.DeleteOriginalResponseAsync();
                             return;
                         case "addchatflag":
                             var flag = command.Data.Options.FirstOrDefault(x => x.Name == "flag")?.Value as string;
-                            if (!EnumHelper.IsValidEnumMember<XivChatType>(flag) || (EnumHelper.TryConvertToEnum<XivChatType>(flag, out var addresult) && chatTypes.Contains(addresult)))
+                            if (!EnumHelper.IsValidEnumMember<XivChatType>(flag) || (EnumHelper.TryConvertToEnum<XivChatType>(flag, out var addresult) && plugin.Configuration.ChatTypes.Contains(addresult)))
                             {
                                 await interaction.RespondAsync("Invalid flag or it is already active.", ephemeral: true);
                                 await Task.Delay(5000);
@@ -150,21 +136,25 @@ namespace AetherLink.Discord
                                 return;
                             }
                             Logger.Debug($"Flag: {flag}");
-                                chatTypes.Add(addresult);
+                                plugin.Configuration.ChatTypes.Add(addresult);
                             await interaction.RespondAsync($"Flag {flag} has been added", ephemeral: true);
                             await Task.Delay(5000);
                             await interaction.DeleteOriginalResponseAsync();
                             return;
                         case "sessiontotxt":
-                            if (messages.Length == 0)
+                            if (plugin.Configuration.ChatLog.Length == 0)
                             {
                                 await interaction.RespondAsync("No messages to convert", ephemeral: true);
                                 await Task.Delay(5000);
                                 await interaction.DeleteOriginalResponseAsync();
                                 return;
                             }
-                            await SendSessionToDM();
-                            await interaction.RespondAsync("done", ephemeral:true);
+                            await SendSessionToDM(interaction);
+                            return;
+                        case "sendmessage":
+                            var chatmessage = command.Data.Options.FirstOrDefault(x => x.Name == "message")?.Value as string;
+                            chat.SendChatMessage(chatmessage);
+                            await interaction.RespondAsync($"Message has been sent to the chat: {chatmessage}", ephemeral: true);
                             await Task.Delay(5000);
                             await interaction.DeleteOriginalResponseAsync();
                             return;
@@ -176,11 +166,10 @@ namespace AetherLink.Discord
                 }
             };
             await interaction.RespondAsync("Command not found", ephemeral: true);
-
         }
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            if (!chatTypes.Contains(type))
+            if (!plugin.Configuration.ChatTypes.Contains(type))
             {
                 return;
             }
@@ -188,28 +177,19 @@ namespace AetherLink.Discord
 
             string senderworld = string.Empty;
             var pureSender = sender.TextValue;
-            if (WorldList.worldList.Any(world => pureSender.Contains(world)))
-            {
-                senderworld = WorldList.worldList.FirstOrDefault(world => pureSender.Contains(world, StringComparison.OrdinalIgnoreCase));
-                pureSender = pureSender.Replace(senderworld, "");
-            }
-            else
-            {
-                senderworld = Svc.ClientState.LocalPlayer.HomeWorld.Value.Name.ToString();
-            }
+            senderworld = GetHomeWorld(pureSender);
+            pureSender = pureSender.Replace(senderworld, "");
             Logger.Debug(senderworld);
             try
             {
-
-
                 var Message = new ChatMessage()
                 {
-                    Sender = sender.TextValue + "@" + senderworld,
+                    Sender = pureSender + "@" + senderworld,
                     Message = message.TextValue,
                     Timestamp = DateTime.Now,
                     ChatType = type
                 };
-                messages.AppendLine($"[{Message.Timestamp}][{type}] {Message.Sender}: {Message.Message}");
+                plugin.Configuration.ChatLog.AppendLine($"[{Message.Timestamp}][{type}] {Message.Sender}: {Message.Message}");
                 var embed = new EmbedBuilder()
                     .WithAuthor($"[{type}]{pureSender}")
                     .WithDescription(message.TextValue)
@@ -227,32 +207,29 @@ namespace AetherLink.Discord
                 Logger.Error(ex, "Failed to send message");
             }
         }
-        private async Task SendSessionToDM()
+        private async Task SendSessionToDM(SocketInteraction interaction)
         {
-            if (string.IsNullOrWhiteSpace(messages.ToString()))
+            if (string.IsNullOrWhiteSpace(plugin.Configuration.ChatLog.ToString()))
             {
                 Logger.Error("No messages to send.");
                 return;
             }
-            var user = await discordClient.GetUserAsync(configuration.DiscordUserId);
-            var dmChannel = await user.CreateDMChannelAsync();
-            if (dmChannel == null)
-            {
-                Logger.Error("DM channel is null. The user may have never DMed the bot or has DMs disabled.");
-                return;
-            }
 
-            await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(messages.ToString()));
-            messages.Clear();
+            await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(plugin.Configuration.ChatLog.ToString()));
+            plugin.Configuration.ChatLog.Clear();
 
             try
             {
                 var attachment = new FileAttachment(stream, "session.txt");
-                await dmChannel.SendFileAsync(attachment, "Here's the log for the current session!");
+                await interaction.RespondWithFileAsync(attachment, "Here's the log for the current session!");
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "Failed to send session to DM");
+            }
+            finally
+            {
+                stream.Dispose();
             }
         }
 
@@ -261,7 +238,7 @@ namespace AetherLink.Discord
             if(configuration.DiscordUserId == 0)
             {
                 Logger.Error("Discord user id is not set, cannot send message");
-                chatGui.Print("Discord user id is not set, please set it in the config window");
+                chatGui.Print("Discord user id is not set, please set it in the config window", messageTag: "AetherLink", tagColor: 51447);
                 return;
             }
             try
@@ -297,7 +274,6 @@ namespace AetherLink.Discord
                     .WithName("fc")
                     .WithDescription("Send a message to the Free Company")
                     .AddOption("message", ApplicationCommandOptionType.String, "The message to send", isRequired:true);
-
             var tellCommand = new SlashCommandBuilder()
                 .WithName("tell")
                 .WithDescription("Send a message to a specific person")
@@ -323,27 +299,33 @@ namespace AetherLink.Discord
             var removeChatFlagCommand = new SlashCommandBuilder()
                     .WithName("removechatflag")
                     .WithDescription("Remove a chat flag")
-                    .AddOption("flag", ApplicationCommandOptionType.String, "The flag to remove", isAutocomplete:true, isRequired:true)
-                    .Build();
+                    .AddOption("flag", ApplicationCommandOptionType.String, "The flag to remove", isAutocomplete:true, isRequired:true);
             var sessionToTxtCommand = new SlashCommandBuilder()
                     .WithName("sessiontotxt")
                     .WithDescription("Convert the current session to a text file");
+            var messageCommand = new SlashCommandBuilder()
+                    .WithName("sendmessage")
+                    .WithDescription("Send a message into the chat")
+                    .AddOption("message", ApplicationCommandOptionType.String, "The message to send", isRequired: true);
 
             try
             {
 
-               // await discordClient.CreateGlobalApplicationCommandAsync(tellCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(sayCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(fcCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(replyCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(addChatFlagCommand.Build());
-                //await discordClient.CreateGlobalApplicationCommandAsync(removeChatFlagCommand);
-                //await discordClient.CreateGlobalApplicationCommandAsync(sessionToTxtCommand.Build());
+                var commands = new SlashCommandBuilder[] { fcCommand, tellCommand, sayCommand, replyCommand, addChatFlagCommand, removeChatFlagCommand, sessionToTxtCommand, messageCommand };
+                await RegisterBulkCommands(commands);
+
                 Logger.Debug("commands registered");
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "Failed to register slash commands");
+            }
+        }
+        private async Task RegisterBulkCommands(SlashCommandBuilder[] slashCommandBuilders)
+        {
+            foreach (var command in slashCommandBuilders)
+            {
+                await discordClient.CreateGlobalApplicationCommandAsync(command.Build());
             }
         }
         private async Task HandleAutoComplete(SocketAutocompleteInteraction interaction)
@@ -366,15 +348,26 @@ namespace AetherLink.Discord
         {
             try
             {
-
                 await RegisterSlashCommands();
                 chatGui.ChatMessage += OnChatMessage;
             }
             catch (Exception ex)
             {
                 Logger.Error(ex, "Failed to add modules");
-
             }
+        }
+        private static string GetHomeWorld(string name)
+        {
+            string senderworld;
+            if (WorldList.worldList.Any(world => name.Contains(world)))
+            {
+                senderworld = WorldList.worldList.FirstOrDefault(world => name.Contains(world, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                senderworld = Svc.ClientState.LocalPlayer.HomeWorld.Value.Name.ToString();
+            }
+            return senderworld ?? "World not found";
         }
         private Color GetColorForType(XivChatType type)
         {
@@ -396,11 +389,13 @@ namespace AetherLink.Discord
                 XivChatType.TellOutgoing => Color.Magenta,
                 XivChatType.Say => Color.LighterGrey,
                 XivChatType.Shout => Color.Orange,
+                XivChatType.Party => Color.Blue,
                 _ => Color.LightGrey,
             };
         }
         public void Dispose()
         {
+            chatGui.ChatMessage -= OnChatMessage;
             discordClient.Dispose();
         }
     }
