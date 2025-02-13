@@ -15,6 +15,7 @@ using System.Text;
 using System.IO;
 using System.ComponentModel.DataAnnotations;
 using System.Xml.Linq;
+using Discord.Net;
 
 
 namespace AetherLink.Discord
@@ -55,7 +56,7 @@ namespace AetherLink.Discord
             if (string.IsNullOrEmpty(configuration.DiscordToken))
             {
                 Logger.Error("Discord token is not set, cannot start bot");
-                chatGui.Print("Discord token is not set, cannot start bot", messageTag:"AetherLink", tagColor: 51447);
+                chatGui.Print("Discord token is not set, cannot start bot", messageTag: "AetherLink", tagColor: 51447);
                 return;
             }
             try
@@ -66,10 +67,15 @@ namespace AetherLink.Discord
                 this.discordClient.InteractionCreated += HandleInteractionAsync;
                 this.discordClient.AutocompleteExecuted += HandleAutoComplete;
             }
+            catch (HttpException httpEx)
+            {
+                Logger.Error(httpEx, "HTTP error occurred while starting bot.");
+                chatGui.Print("HTTP error occurred while starting bot.", messageTag: "AetherLink", tagColor: 51447);
+            }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Token invalid, cannot start bot.");
-                chatGui.Print("Token invalid, cannot start bot.",messageTag: "AetherLink", tagColor: 51447);
+                Logger.Error(ex, "An error occurred while starting bot.");
+                chatGui.Print("An error occurred while starting bot.", messageTag: "AetherLink", tagColor: 51447);
             }
             Logger.Info("DiscordHandler initialized");
         }
@@ -235,7 +241,7 @@ namespace AetherLink.Discord
 
         private async Task SendEmbedToDM(Embed embed)
         {
-            if(configuration.DiscordUserId == 0)
+            if (configuration.DiscordUserId == 0)
             {
                 Logger.Error("Discord user id is not set, cannot send message");
                 chatGui.Print("Discord user id is not set, please set it in the config window", messageTag: "AetherLink", tagColor: 51447);
@@ -359,7 +365,7 @@ namespace AetherLink.Discord
         private static string GetHomeWorld(string name)
         {
             string senderworld;
-            if (WorldList.worldList.Any(world => name.Contains(world)))
+            if (WorldList.worldList.Any(world => name.Contains(world, StringComparison.OrdinalIgnoreCase)))
             {
                 senderworld = WorldList.worldList.FirstOrDefault(world => name.Contains(world, StringComparison.OrdinalIgnoreCase));
             }
@@ -396,7 +402,10 @@ namespace AetherLink.Discord
         public void Dispose()
         {
             chatGui.ChatMessage -= OnChatMessage;
-            discordClient.Dispose();
+            if (discordClient != null)
+            {
+               discordClient.Dispose();
+            }
         }
     }
 }
