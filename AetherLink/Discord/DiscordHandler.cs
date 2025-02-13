@@ -48,6 +48,7 @@ namespace AetherLink.Discord
         }
         public async void TokenChanged(string changedValue)
         {
+            chatGui.Print("Token changed, restarting bot", messageTag: "AetherLink", tagColor: 51447);
             await discordClient.StopAsync();
             await _init();
         }
