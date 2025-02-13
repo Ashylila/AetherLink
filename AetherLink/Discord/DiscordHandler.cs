@@ -330,9 +330,15 @@ namespace AetherLink.Discord
         }
         private async Task RegisterBulkCommands(SlashCommandBuilder[] slashCommandBuilders)
         {
+            try{
             foreach (var command in slashCommandBuilders)
             {
                 await discordClient.CreateGlobalApplicationCommandAsync(command.Build());
+            }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to register slash commands");
             }
         }
         private async Task HandleAutoComplete(SocketAutocompleteInteraction interaction)
