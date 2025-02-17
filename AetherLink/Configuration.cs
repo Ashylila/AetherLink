@@ -46,24 +46,8 @@ public class Configuration : IPluginConfiguration
     }
     public bool IsRunning { get; set; } = false;
     public StringBuilder ChatLog { get; set; } = new();
-    public List<XivChatType> ChatTypes { get; set; } = new()
-    {
-            XivChatType.FreeCompany,
-            XivChatType.Ls1,
-            XivChatType.Ls2,
-            XivChatType.Ls3,
-            XivChatType.Ls4,
-            XivChatType.Ls5,
-            XivChatType.Ls6,
-            XivChatType.Ls7,
-            XivChatType.Ls8,
-            XivChatType.CrossLinkShell1,
-            XivChatType.CrossLinkShell2,
-            XivChatType.CrossLinkShell3,
-            XivChatType.TellIncoming,
-            XivChatType.TellOutgoing,
-            XivChatType.Say
-    };
+    public bool IsChatLogEnabled { get; set; } = true;
+    public List<XivChatType> ChatTypes { get; set; } = new();
     // the below exist just to make saving less cumbersome
     public void Save()
     {

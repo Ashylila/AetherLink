@@ -165,6 +165,61 @@ namespace AetherLink.Discord
                             await Task.Delay(5000);
                             await interaction.DeleteOriginalResponseAsync();
                             return;
+                        case "currentflags":
+
+                            var flags = string.Join("\n", plugin.Configuration.ChatTypes.Select(flag => $"• {flag}"));
+                                    var embed = new EmbedBuilder()
+                                        .WithTitle("Here is your list:")
+                                        .WithDescription(flags)
+                                        .WithColor(Color.Blue)
+                                        .Build();
+                            await interaction.RespondAsync(embed: embed);
+                            return;
+                        case "help":
+                            var helpEmbed = new EmbedBuilder()
+                                .WithTitle("Available commands")
+                                .AddField("fc", "Send a message to the Free Company")
+                                .AddField("tell", "Send a message to a specific person")
+                                .AddField("say", "Send a message to the say chat")
+                                .AddField("reply", "Reply to the most recent tell message")
+                                .AddField("addchatflag", "Add a chat flag")
+                                .AddField("removechatflag", "Remove a chat flag")
+                                .AddField("sessiontotxt", "Convert the current session to a text file")
+                                .AddField("sendmessage", "Send a message into the chat")
+                                .AddField("currentflags", "List the current chat flags")
+                                .AddField("help", "List all available commands")
+                                .AddField("enable", "Enable the bot")
+                                .AddField("disable", "Disable the bot")
+                                .WithColor(Color.Blue)
+                                .Build();
+                            await interaction.RespondAsync(embed: helpEmbed);
+                            return;
+                        case "enable":
+                            if(configuration.IsChatLogEnabled)
+                            {
+                                await interaction.RespondAsync("The logging of the chat is already enabled", ephemeral: true);
+                                await Task.Delay(5000);
+                                await interaction.DeleteOriginalResponseAsync();
+                                return;
+                            }
+                            configuration.IsChatLogEnabled = true;
+                            await interaction.RespondAsync("The logging of the chat has been enabled", ephemeral: true);
+                            await Task.Delay(5000);
+                            await interaction.DeleteOriginalResponseAsync();
+                            return;
+                        case "disable":
+                            if(!configuration.IsChatLogEnabled)
+                            {
+                                await interaction.RespondAsync("The logging of the chat is already disabled", ephemeral: true);
+                                await Task.Delay(5000);
+                                await interaction.DeleteOriginalResponseAsync();
+                                return;
+                            }
+                            configuration.IsChatLogEnabled = false;
+                            await interaction.RespondAsync("The logging of the chat has been disabled", ephemeral: true);
+                            await Task.Delay(5000);
+                            await interaction.DeleteOriginalResponseAsync();
+                            return;
                     };
                 }
                 catch (Exception ex)
@@ -176,7 +231,8 @@ namespace AetherLink.Discord
         }
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            if (!plugin.Configuration.ChatTypes.Contains(type))
+            Logger.Verbose("Chat message received: " + sender.TextValue + ": " + message.TextValue + ", type: " + type);
+            if (!plugin.Configuration.ChatTypes.Contains(type) || !plugin.Configuration.IsChatLogEnabled)
             {
                 return;
             }
@@ -314,11 +370,23 @@ namespace AetherLink.Discord
                     .WithName("sendmessage")
                     .WithDescription("Send a message into the chat")
                     .AddOption("message", ApplicationCommandOptionType.String, "The message to send", isRequired: true);
+            var currentFlagsCommand = new SlashCommandBuilder()
+                    .WithName("currentflags")
+                    .WithDescription("List the current chat flags");
+            var helpCommand = new SlashCommandBuilder()
+                    .WithName("help")
+                    .WithDescription("List all available commands");
+            var enableCommand = new SlashCommandBuilder()
+                    .WithName("enable")
+                    .WithDescription("Enable the bot");
+            var disableCommand = new SlashCommandBuilder()
+                    .WithName("disable")
+                    .WithDescription("Disable the bot");
 
             try
             {
 
-                var commands = new SlashCommandBuilder[] { fcCommand, tellCommand, sayCommand, replyCommand, addChatFlagCommand, removeChatFlagCommand, sessionToTxtCommand, messageCommand };
+                var commands = new SlashCommandBuilder[] { fcCommand, tellCommand, sayCommand, replyCommand, addChatFlagCommand, removeChatFlagCommand, sessionToTxtCommand, messageCommand, currentFlagsCommand, helpCommand, enableCommand, disableCommand };
                 await RegisterBulkCommands(commands);
 
                 Logger.Debug("commands registered");
