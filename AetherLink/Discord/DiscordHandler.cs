@@ -10,12 +10,10 @@ using Dalamud.Game.Text.SeStringHandling;
 using AetherLink.Models;
 using AetherLink.Utility;
 using AetherLink.DalamudServices;
-using AetherLink.Constants;
 using System.Text;
 using System.IO;
-using System.ComponentModel.DataAnnotations;
-using System.Xml.Linq;
 using Discord.Net;
+using Lumina.Excel.Sheets;
 
 
 namespace AetherLink.Discord
@@ -54,6 +52,7 @@ namespace AetherLink.Discord
         }
         public async Task _init()
         {
+            Logger.Debug("Starting discord bot...");
             if (string.IsNullOrEmpty(configuration.DiscordToken))
             {
                 Logger.Error("Discord token is not set, cannot start bot");
@@ -78,7 +77,7 @@ namespace AetherLink.Discord
                 Logger.Error(ex, "An error occurred while starting bot.");
                 chatGui.Print("An error occurred while starting bot.", messageTag: "AetherLink", tagColor: 51447);
             }
-            Logger.Info("DiscordHandler initialized");
+            Logger.Info("Bot logged in successfully!");
         }
         private async Task HandleInteractionAsync(SocketInteraction interaction)
         {
@@ -169,7 +168,7 @@ namespace AetherLink.Discord
 
                             var flags = string.Join("\n", plugin.Configuration.ChatTypes.Select(flag => $"• {flag}"));
                                     var embed = new EmbedBuilder()
-                                        .WithTitle("Here is your list:")
+                                        .WithTitle("Here are the current active flags:")
                                         .WithDescription(flags)
                                         .WithColor(Color.Blue)
                                         .Build();
@@ -221,6 +220,7 @@ namespace AetherLink.Discord
                             await interaction.DeleteOriginalResponseAsync();
                             return;
                     };
+
                 }
                 catch (Exception ex)
                 {
@@ -234,15 +234,15 @@ namespace AetherLink.Discord
             Logger.Verbose("Chat message received: " + sender.TextValue + ": " + message.TextValue + ", type: " + type);
             if (!plugin.Configuration.ChatTypes.Contains(type) || !plugin.Configuration.IsChatLogEnabled)
             {
+                Logger.Verbose("Chat type not enabled or chat log is disabled");
                 return;
             }
-            Logger.Verbose($"Chat message received: {sender.TextValue}: {message.TextValue}, type: {type}");
 
-            string senderworld = string.Empty;
-            var pureSender = sender.TextValue;
-            senderworld = GetHomeWorld(pureSender);
-            pureSender = pureSender.Replace(senderworld, "");
-            Logger.Debug(senderworld);
+            string senderworld = GetHomeWorld(sender.TextValue);
+            Logger.Verbose(senderworld);
+            var pureSender = sender.TextValue.Replace(senderworld, "");
+            Logger.Verbose(pureSender);
+
             try
             {
                 var Message = new ChatMessage()
@@ -253,6 +253,7 @@ namespace AetherLink.Discord
                     ChatType = type
                 };
                 plugin.Configuration.ChatLog.AppendLine($"[{Message.Timestamp}][{type}] {Message.Sender}: {Message.Message}");
+
                 var embed = new EmbedBuilder()
                     .WithAuthor($"[{type}]{pureSender}")
                     .WithDescription(message.TextValue)
@@ -382,11 +383,9 @@ namespace AetherLink.Discord
             var disableCommand = new SlashCommandBuilder()
                     .WithName("disable")
                     .WithDescription("Disable the bot");
-
             try
             {
-
-                var commands = new SlashCommandBuilder[] { fcCommand, tellCommand, sayCommand, replyCommand, addChatFlagCommand, removeChatFlagCommand, sessionToTxtCommand, messageCommand, currentFlagsCommand, helpCommand, enableCommand, disableCommand };
+                var commands = new SlashCommandBuilder[] { fcCommand, tellCommand, sayCommand, replyCommand, addChatFlagCommand, removeChatFlagCommand, sessionToTxtCommand, messageCommand, currentFlagsCommand, helpCommand, enableCommand, disableCommand};
                 await RegisterBulkCommands(commands);
 
                 Logger.Debug("commands registered");
@@ -398,9 +397,15 @@ namespace AetherLink.Discord
         }
         private async Task RegisterBulkCommands(SlashCommandBuilder[] slashCommandBuilders)
         {
+            var currentCommands = await discordClient.GetGlobalApplicationCommandsAsync();
             try{
             foreach (var command in slashCommandBuilders)
             {
+                if(currentCommands.Any(x => x.Name == command.Name))
+                {
+                    Logger.Verbose($"Command {command.Name} is already registered, skipping");
+                    continue;
+                }
                 await discordClient.CreateGlobalApplicationCommandAsync(command.Build());
             }
             }
@@ -427,6 +432,7 @@ namespace AetherLink.Discord
         }
         private async Task DiscordOnReady()
         {
+            Logger.Debug("Discord bot is ready, registering commands...");
             try
             {
                 await RegisterSlashCommands();
@@ -434,15 +440,16 @@ namespace AetherLink.Discord
             }
             catch (Exception ex)
             {
-                Logger.Error(ex, "Failed to add modules");
+                Logger.Error(ex, "Failed to register commands...");
             }
         }
-        private static string GetHomeWorld(string name)
+        private string GetHomeWorld(string name)
         {
+            var WorldList = Svc.Data.GetExcelSheet<World>().Select(world => world.Name.ToString()).Where(name => !string.IsNullOrEmpty(name)).ToHashSet();
             string senderworld;
-            if (WorldList.worldList.Any(world => name.Contains(world, StringComparison.OrdinalIgnoreCase)))
+            if (WorldList.Any(world => name.Contains(world, StringComparison.OrdinalIgnoreCase)))
             {
-                senderworld = WorldList.worldList.FirstOrDefault(world => name.Contains(world, StringComparison.OrdinalIgnoreCase));
+                senderworld = WorldList.FirstOrDefault(world => name.Contains(world, StringComparison.OrdinalIgnoreCase));
             }
             else
             {
