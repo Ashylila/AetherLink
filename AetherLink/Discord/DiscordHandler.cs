@@ -231,10 +231,9 @@ namespace AetherLink.Discord
         }
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            Logger.Verbose("Chat message received: " + sender.TextValue + ": " + message.TextValue + ", type: " + type);
             if (!plugin.Configuration.ChatTypes.Contains(type) || !plugin.Configuration.IsChatLogEnabled)
             {
-                Logger.Verbose("Chat type not enabled or chat log is disabled");
+                
                 return;
             }
 
@@ -416,6 +415,8 @@ namespace AetherLink.Discord
         }
         private async Task HandleAutoComplete(SocketAutocompleteInteraction interaction)
         {
+            try{
+            Logger.Verbose($"Auto complete received, command: {interaction.Data.CommandName}, current: {interaction.Data.Current.Name}");
             if (interaction.Data.CommandName == "tell" && interaction.Data.Current.Name == "target")
             {
                 string userInput = interaction.Data.Current.Value.ToString();
@@ -428,6 +429,11 @@ namespace AetherLink.Discord
                 string userInput = interaction.Data.Current.Value.ToString();
                 var choices = EnumHelper.GetEnumChoices<XivChatType>().Where(flag => flag.StartsWith(userInput, StringComparison.OrdinalIgnoreCase)).Select(flag => new AutocompleteResult(flag, flag)).Take(5).ToList();
                 await interaction.RespondAsync(choices);
+            }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to handle auto complete");
             }
         }
         private async Task DiscordOnReady()

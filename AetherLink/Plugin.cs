@@ -18,7 +18,7 @@ public sealed class Plugin : IDalamudPlugin
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
     [PluginService] internal static IClientState ClientState { get; private set; } = null!;
     [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
-    [PluginService] internal static IPluginLog Log { get; private set; } = null!;
+    internal static IPluginLog Log  => Svc.Log;
 
     private const string CommandName = "/aetherlink";
 
@@ -28,6 +28,7 @@ public sealed class Plugin : IDalamudPlugin
     public readonly WindowSystem WindowSystem = new("AetherLink");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
+    private LogWindow LogWindow { get; init; }
 
     public Plugin()
     {
@@ -38,9 +39,11 @@ public sealed class Plugin : IDalamudPlugin
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
-
+        LogWindow = new LogWindow(this);
+        
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
+        WindowSystem.AddWindow(LogWindow);
 
         CommandManager.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
@@ -74,12 +77,20 @@ public sealed class Plugin : IDalamudPlugin
 
     private void OnCommand(string command, string args)
     {
-        // in response to the slash command, just toggle the display status of our main ui
-        ToggleMainUI();
+        Log.Verbose(args);
+        switch (args.ToLower())
+        {
+            case "":
+                ToggleMainUI();
+                break;
+            case "chatlog":
+                ToggleChatLogUI();
+                break;
+        }
     }
 
     private void DrawUI() => WindowSystem.Draw();
-
+    public void ToggleChatLogUI() => LogWindow.Toggle();
     public void ToggleConfigUI() => ConfigWindow.Toggle();
     public void ToggleMainUI() => MainWindow.Toggle();
 }
