@@ -7,16 +7,21 @@ using Dalamud.Interface.Utility;
 using System.Collections.Generic;
 using System.Text;
 using Dalamud.Game.Text;
-
+using AetherLink.DalamudServices;
+using System.IO;
+using System.Text.Json;
+using AetherLink.Models;
 
 
 namespace AetherLink.Windows;
 
 public class LogWindow : Window, IDisposable
 {
+    private List<ChatMessage> Chatlog = new List<ChatMessage>();
     private string searchQuery = string.Empty;
     private XivChatType? selectedChatType = null;
     private Plugin Plugin;
+    private string FilePath;
     private Configuration configuration;
     public LogWindow(Plugin plugin)
         : base("Chatlog##With a hidden ID")
@@ -24,6 +29,7 @@ public class LogWindow : Window, IDisposable
         Size = new Vector2(1500, 800);
         Plugin = plugin;
         configuration = plugin.Configuration;
+        FilePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
     }
     public override void Draw()
     {
@@ -55,50 +61,28 @@ public class LogWindow : Window, IDisposable
 
         
         ImGui.BeginChild("LogContent", new Vector2(0, 0), true);
+        string LogContent = File.ReadAllText(FilePath);
+        Chatlog = JsonSerializer.Deserialize<List<ChatMessage>>(LogContent);
+        LogContent = string.Empty; 
 
-        StringBuilder filteredLogContent = new StringBuilder();
-        foreach (var line in Plugin.Configuration.ChatLog.ToString().Split('\n'))
+        foreach (var line in Chatlog)
         {
-            if ((selectedChatType == null || line.Contains($"[{selectedChatType.ToString()}]")) &&
-            (string.IsNullOrEmpty(searchQuery) || line.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)))
-            {
-            filteredLogContent.AppendLine(line);
-            }
-        }
-
-        foreach (var line in filteredLogContent.ToString().Split('\n'))
-        {
-            if (!string.IsNullOrWhiteSpace(line))
+            if ((selectedChatType == null || selectedChatType == XivChatType.None || line.ChatType == selectedChatType) &&
+            (string.IsNullOrEmpty(searchQuery) || line.Message.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)))
             {
             ImGui.Separator();
-            var parts = line.Split(new[] { ']' }, 3);
-            if (parts.Length == 3)
-            {
-                ImGui.TextColored(new Vector4(0.5f, 0.5f, 0.5f, 1.0f), parts[0] + "]"); 
-                ImGui.SameLine();
-                ImGui.TextColored(GetColorForType(parts[1].Trim('[', ']')), parts[1] + "]"); 
-                ImGui.SameLine();
-                var restParts = parts[2].Split(new[] { ':' }, 2); 
-                if (restParts.Length == 2)
-                {
-                ImGui.TextColored(new Vector4(0.0f, 0.5f, 1.0f, 1.0f), restParts[0] + ":"); 
-                ImGui.SameLine();
-                ImGui.TextWrapped(restParts[1]); 
-                }
-                else
-                {
-                ImGui.TextWrapped(parts[2]); 
-                }
-            }
-            else
-            {
-                ImGui.TextWrapped(line); 
-            }
+            ImGui.TextColored(new Vector4(0.5f, 0.5f, 0.5f, 1.0f), $"[{line.Timestamp}]");
+            ImGui.SameLine();
+            ImGui.TextColored(GetColorForType(line.ChatType.ToString()), $"[{line.ChatType}]");
+            ImGui.SameLine();
+            ImGui.TextColored(new Vector4(0.0f, 0.5f, 1.0f, 1.0f), $"{line.Sender}:");
+            ImGui.SameLine();
+            ImGui.TextWrapped(line.Message);
             }
         }
 
         ImGui.EndChild();
-
+        Chatlog.Clear();
         Vector4 GetColorForType(string chatType)
         {
             return chatType switch
@@ -126,6 +110,6 @@ public class LogWindow : Window, IDisposable
     }
     public void Dispose() 
     {
-
+        Chatlog.Clear();
     }
 }
