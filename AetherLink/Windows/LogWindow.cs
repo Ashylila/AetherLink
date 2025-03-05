@@ -18,6 +18,8 @@ namespace AetherLink.Windows;
 public class LogWindow : Window, IDisposable
 {
     private List<ChatMessage> Chatlog = new List<ChatMessage>();
+    private string LogContent = string.Empty;
+    private DateTime lastReadTime = DateTime.MinValue;
     private string searchQuery = string.Empty;
     private XivChatType? selectedChatType = null;
     private Plugin Plugin;
@@ -33,7 +35,12 @@ public class LogWindow : Window, IDisposable
     }
     public override void Draw()
     {
-        
+        if (File.GetLastWriteTime(FilePath) > lastReadTime || lastReadTime == DateTime.MinValue) // Check if file changed
+        {
+        lastReadTime = File.GetLastWriteTime(FilePath);
+        LogContent = File.ReadAllText(FilePath);
+        Chatlog = JsonSerializer.Deserialize<List<ChatMessage>>(LogContent) ?? new List<ChatMessage>();
+        }   
         ImGui.BeginChild("FilterControls", new Vector2(0, 50), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         
         
@@ -61,9 +68,6 @@ public class LogWindow : Window, IDisposable
 
         
         ImGui.BeginChild("LogContent", new Vector2(0, 0), true);
-        string LogContent = File.ReadAllText(FilePath);
-        Chatlog = JsonSerializer.Deserialize<List<ChatMessage>>(LogContent);
-        LogContent = string.Empty; 
 
         foreach (var line in Chatlog)
         {
@@ -82,8 +86,8 @@ public class LogWindow : Window, IDisposable
         }
 
         ImGui.EndChild();
-        Chatlog.Clear();
-        Vector4 GetColorForType(string chatType)
+    }
+            Vector4 GetColorForType(string chatType)
         {
             return chatType switch
             {
@@ -107,7 +111,6 @@ public class LogWindow : Window, IDisposable
             _ => new Vector4(0.75f, 0.75f, 0.75f, 1.0f), // LightGrey
             };
         }
-    }
     public void Dispose() 
     {
         Chatlog.Clear();
