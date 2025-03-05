@@ -59,11 +59,15 @@ public class LogWindow : Window, IDisposable
             ImGui.EndCombo();
         }
 
-        
+        bool disableSearch = Chatlog.Count == 0;
+        if (disableSearch) ImGui.BeginDisabled();
+
         ImGui.Text("Search:");
         ImGui.SameLine();
         ImGui.InputText("##searchBar", ref searchQuery, 100); 
 
+        if (disableSearch) ImGui.EndDisabled();
+        
         ImGui.EndChild();
 
         
