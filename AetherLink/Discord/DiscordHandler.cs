@@ -14,6 +14,7 @@ using System.Text;
 using System.IO;
 using Discord.Net;
 using Lumina.Excel.Sheets;
+using System.Text.Json;
 
 
 namespace AetherLink.Discord
@@ -148,13 +149,6 @@ namespace AetherLink.Discord
                             await interaction.DeleteOriginalResponseAsync();
                             return;
                         case "sessiontotxt":
-                            if (plugin.Configuration.ChatLog.Length == 0)
-                            {
-                                await interaction.RespondAsync("No messages to convert", ephemeral: true);
-                                await Task.Delay(5000);
-                                await interaction.DeleteOriginalResponseAsync();
-                                return;
-                            }
                             await SendSessionToDM(interaction);
                             return;
                         case "sendmessage":
@@ -231,12 +225,7 @@ namespace AetherLink.Discord
         }
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            Logger.Verbose("Chat message received: " + sender.TextValue + ": " + message.TextValue + ", type: " + type);
-            if (!plugin.Configuration.ChatTypes.Contains(type) || !plugin.Configuration.IsChatLogEnabled)
-            {
-                Logger.Verbose("Chat type not enabled or chat log is disabled");
-                return;
-            }
+            if (!plugin.Configuration.ChatTypes.Contains(type) || !plugin.Configuration.IsChatLogEnabled) return;
 
             string senderworld = GetHomeWorld(sender.TextValue);
             Logger.Verbose(senderworld);
@@ -245,6 +234,20 @@ namespace AetherLink.Discord
 
             try
             {
+                string filePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
+
+                string chatLog;
+                if(File.Exists(filePath))
+                {
+                    chatLog = File.ReadAllText(filePath);
+                }
+                else
+                {
+                    chatLog = "[]";
+                }
+
+                List<ChatMessage> chatJson = JsonSerializer.Deserialize<List<ChatMessage>>(chatLog) ?? new List<ChatMessage>();
+
                 var Message = new ChatMessage()
                 {
                     Sender = pureSender + "@" + senderworld,
@@ -252,7 +255,9 @@ namespace AetherLink.Discord
                     Timestamp = DateTime.Now,
                     ChatType = type
                 };
-                plugin.Configuration.ChatLog.AppendLine($"[{Message.Timestamp}][{type}] {Message.Sender}: {Message.Message}");
+                chatJson.Add(Message);
+                File.WriteAllText(filePath, JsonSerializer.Serialize(chatJson, new JsonSerializerOptions { WriteIndented = true }));
+                //plugin.Configuration.ChatLog.AppendLine($"[{Message.Timestamp}][{type}] {Message.Sender}: {Message.Message}");
 
                 var embed = new EmbedBuilder()
                     .WithAuthor($"[{type}]{pureSender}")
@@ -273,28 +278,32 @@ namespace AetherLink.Discord
         }
         private async Task SendSessionToDM(SocketInteraction interaction)
         {
-            if (string.IsNullOrWhiteSpace(plugin.Configuration.ChatLog.ToString()))
-            {
-                Logger.Error("No messages to send.");
-                return;
-            }
-
-            await using var stream = new MemoryStream(Encoding.UTF8.GetBytes(plugin.Configuration.ChatLog.ToString()));
-            plugin.Configuration.ChatLog.Clear();
-
             try
+    {
+        string filePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
+        string chatLog = File.ReadAllText(filePath);
+        List<ChatMessage> chatJson = JsonSerializer.Deserialize<List<ChatMessage>>(chatLog) ?? new List<ChatMessage>();
+
+        // Create a temp file for the formatted chat log
+        string tempFilePath = Path.GetTempFileName();
+        using (StreamWriter writer = new StreamWriter(tempFilePath))
+        {
+            foreach (var message in chatJson)
             {
-                var attachment = new FileAttachment(stream, "session.txt");
-                await interaction.RespondWithFileAsync(attachment, "Here's the log for the current session!");
+                writer.WriteLine($"[{message.Timestamp}][{message.ChatType}] {message.Sender}: {message.Message}");
             }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Failed to send session to DM");
-            }
-            finally
-            {
-                stream.Dispose();
-            }
+        }
+
+        // Send file as attachment
+        await interaction.RespondWithFileAsync(tempFilePath, "chatlog.txt", "Here is the chat log session.");
+
+        // Optional: Delete the temp file after sending
+        File.Delete(tempFilePath);
+    }
+    catch (Exception ex)
+    {
+        Logger.Error(ex, "Failed to send session to DM");
+    }
         }
 
         private async Task SendEmbedToDM(Embed embed)
@@ -416,6 +425,8 @@ namespace AetherLink.Discord
         }
         private async Task HandleAutoComplete(SocketAutocompleteInteraction interaction)
         {
+            try{
+            Logger.Verbose($"Auto complete received, command: {interaction.Data.CommandName}, current: {interaction.Data.Current.Name}");
             if (interaction.Data.CommandName == "tell" && interaction.Data.Current.Name == "target")
             {
                 string userInput = interaction.Data.Current.Value.ToString();
@@ -428,6 +439,11 @@ namespace AetherLink.Discord
                 string userInput = interaction.Data.Current.Value.ToString();
                 var choices = EnumHelper.GetEnumChoices<XivChatType>().Where(flag => flag.StartsWith(userInput, StringComparison.OrdinalIgnoreCase)).Select(flag => new AutocompleteResult(flag, flag)).Take(5).ToList();
                 await interaction.RespondAsync(choices);
+            }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error(ex, "Failed to handle auto complete");
             }
         }
         private async Task DiscordOnReady()
@@ -488,6 +504,7 @@ namespace AetherLink.Discord
             {
                discordClient.Dispose();
             }
+            
         }
     }
 }

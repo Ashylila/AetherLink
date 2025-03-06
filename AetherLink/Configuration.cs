@@ -45,7 +45,6 @@ public class Configuration : IPluginConfiguration
     }
     public bool IsRunning { get; set; } = false;
     public bool IsFirstSetup { get; set; } = true;
-    public StringBuilder ChatLog { get; set; } = new();
     public bool IsChatLogEnabled { get; set; } = true;
     public List<XivChatType> ChatTypes { get; set; } = new();
     // the below exist just to make saving less cumbersome
