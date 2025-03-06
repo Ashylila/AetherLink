@@ -28,7 +28,8 @@ public class LogWindow : Window, IDisposable
     public LogWindow(Plugin plugin)
         : base("Chatlog##With a hidden ID")
     {
-        Size = new Vector2(1500, 800);
+        var displaySize = ImGui.GetIO().DisplaySize;
+        Size = new Vector2(displaySize.X * 0.8f, displaySize.Y * 0.8f);
         Plugin = plugin;
         configuration = plugin.Configuration;
         FilePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
@@ -37,12 +38,11 @@ public class LogWindow : Window, IDisposable
     {
         if (File.GetLastWriteTime(FilePath) > lastReadTime || lastReadTime == DateTime.MinValue) // Check if file changed
         {
-        lastReadTime = File.GetLastWriteTime(FilePath);
-        LogContent = File.ReadAllText(FilePath);
-        Chatlog = JsonSerializer.Deserialize<List<ChatMessage>>(LogContent) ?? new List<ChatMessage>();
+            lastReadTime = File.GetLastWriteTime(FilePath);
+            LogContent = File.ReadAllText(FilePath);
+            Chatlog = JsonSerializer.Deserialize<List<ChatMessage>>(LogContent) ?? new List<ChatMessage>();
         }   
         ImGui.BeginChild("FilterControls", new Vector2(0, 50), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
-        
         
         ImGui.Text("Filter by Chat Type:");
         ImGui.SameLine();
