@@ -4,6 +4,7 @@ using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace AetherLink;
 
@@ -12,8 +13,8 @@ public class Configuration : IPluginConfiguration
 {
     private string discordToken = string.Empty;
     private ulong discordUserId = 0;
-
-    public event Action<string>? OnDiscordTokenChanged;
+    public delegate Task OnDiscordTokenChangedDelegate(string value);
+    public event OnDiscordTokenChangedDelegate? OnDiscordTokenChanged;
     public event Action<ulong>? OnDiscordUserIdChanged;
     public int Version { get; set; } = 0;
 
@@ -43,7 +44,6 @@ public class Configuration : IPluginConfiguration
             }
         }
     }
-    public bool IsRunning { get; set; } = false;
     public bool IsFirstSetup { get; set; } = true;
     public bool IsChatLogEnabled { get; set; } = true;
     public List<XivChatType> ChatTypes { get; set; } = new();
