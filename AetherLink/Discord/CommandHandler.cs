@@ -77,6 +77,7 @@ public class CommandHandler
         {
             if (_commands.TryGetValue(command.Data.Name, out var cmd))
             {
+                Logger.Verbose($"Executing command {command.Data.Name}");
                 await cmd.Execute(interaction);
             }
             else

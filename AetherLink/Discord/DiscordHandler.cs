@@ -15,6 +15,7 @@ using System.IO;
 using Discord.Net;
 using Lumina.Excel.Sheets;
 using System.Text.Json;
+using Serilog;
 
 
 namespace AetherLink.Discord
@@ -23,8 +24,8 @@ namespace AetherLink.Discord
     {
         static IPluginLog Logger => Svc.Log;
         public static List<ChatMessage> chatMessages = new();
-        public readonly DiscordSocketClient discordClient;
-        private readonly Configuration configuration;
+        internal readonly DiscordSocketClient discordClient;
+        private Configuration configuration => Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         private IChatGui chatGui => Svc.Chat;
         private readonly Plugin plugin;
 
@@ -33,7 +34,7 @@ namespace AetherLink.Discord
         public DiscordHandler(Plugin plugin)
         {
             this.plugin = plugin;
-            configuration = plugin.Configuration;
+            
             this.discordClient = new(new DiscordSocketConfig()
             {
                 MessageCacheSize = 20,
@@ -60,8 +61,9 @@ namespace AetherLink.Discord
             {
                 await this.discordClient.LoginAsync(TokenType.Bot, configuration.DiscordToken);
                 await this.discordClient.StartAsync();
-                this.discordClient.Ready += DiscordOnReady;
                 this.discordClient.AutocompleteExecuted += HandleAutoComplete;
+                Log.Debug("Subscribed to Chatmessage event...");
+                chatGui.ChatMessage += OnChatMessage;
             }
             catch (HttpException httpEx)
             {
@@ -77,12 +79,15 @@ namespace AetherLink.Discord
         }
         private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            if (!plugin.Configuration.ChatTypes.Contains(type) || !plugin.Configuration.IsChatLogEnabled) return;
+            if(!isConnected)
+            {
+            Logger.Error("Bot is not connected");
+            return;
+            }
+            if (!configuration.ChatTypes.Contains(type) || !configuration.IsChatLogEnabled) return;
 
             string senderworld = GetHomeWorld(sender.TextValue);
-            Logger.Verbose(senderworld);
             var pureSender = sender.TextValue.Replace(senderworld, "");
-            Logger.Verbose(pureSender);
 
             try
             {
@@ -186,12 +191,6 @@ namespace AetherLink.Discord
             {
                 Logger.Error(ex, "Failed to handle auto complete");
             }
-        }
-        private async Task DiscordOnReady()
-        {
-            Logger.Debug("Discord bot is ready, registering commands...");
-            chatGui.ChatMessage += OnChatMessage;
-
         }
         private string GetHomeWorld(string name)
         {

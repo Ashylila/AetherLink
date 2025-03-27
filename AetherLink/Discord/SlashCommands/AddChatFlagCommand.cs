@@ -38,7 +38,6 @@ public class AddChatFlagCommand : ICommand
                 await interaction.DeleteOriginalResponseAsync();
                 return;
             }
-            Svc.Log.Debug($"Flag: {flag}");
             config.ChatTypes.Add(addresult);
             config.Save();
             await interaction.RespondAsync($"Flag {flag} has been added", ephemeral: true);
