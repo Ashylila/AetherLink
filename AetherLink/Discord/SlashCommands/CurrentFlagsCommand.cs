@@ -20,7 +20,7 @@ public class CurrentFlagsCommand : ICommand
     {
         if (interaction is SocketSlashCommand command)
         {
-            var config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            var config = Plugin.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             var flags = string.Join("\n", config.ChatTypes.Select(flag => $"• {flag}"));
             var embed = new EmbedBuilder()
                 .WithTitle("Here are the current active flags:")

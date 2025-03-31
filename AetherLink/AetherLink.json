@@ -12,8 +12,8 @@
             "Communication"
         ],
         "InternalName": "AetherLink",
-        "AssemblyVersion": "0.8",
-        "TestingAssemblyVersion": "0.8",
+        "AssemblyVersion": "0.81",
+        "TestingAssemblyVersion": "0.81",
         "RepoUrl": "https://github.com/Ashylila/AetherLink",
         "ApplicableVersion": "any",
         "DalamudApiLevel": 12,

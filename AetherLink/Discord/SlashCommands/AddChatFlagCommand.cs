@@ -29,7 +29,7 @@ public class AddChatFlagCommand : ICommand
     {
         if (interaction is SocketSlashCommand command)
         {
-            var config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            var config = Plugin.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             var flag = command.Data.Options.FirstOrDefault(x => x.Name == "flag")?.Value as string;
             if (!EnumHelper.IsValidEnumMember<XivChatType>(flag) || (EnumHelper.TryConvertToEnum<XivChatType>(flag, out var addresult) && config.ChatTypes.Contains(addresult)))
             {

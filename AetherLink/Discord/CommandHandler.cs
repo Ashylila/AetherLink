@@ -12,23 +12,34 @@ using System.Linq.Expressions;
 
 namespace AetherLink.Discord;
 
-public class CommandHandler
+public class CommandHandler : IDisposable
 {
     private IPluginLog Logger => Svc.Log;
     private readonly Dictionary<string, ICommand> _commands = new();
     private readonly DiscordSocketClient client;
+    private IFramework Framework => Svc.Framework;
 
     public CommandHandler(DiscordSocketClient client)
     {
         this.client = client;
-        LoadCommands();
         client.InteractionCreated += HandleCommand;
+        LoadCommands();
         client.Ready += async () =>
         {
             await RegisterCommands();
         };
     }
 
+    public void Dispose()
+    {
+        client.InteractionCreated -= HandleCommand;
+    }
+
+    public async Task Init()
+    {
+        LoadCommands();
+        await RegisterCommands();
+    }
     private void LoadCommands()
     {
         var commandTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(ICommand).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
@@ -44,9 +55,15 @@ public class CommandHandler
     {
         try
         {
+            Logger.Info("Registering commands");
             var currentCommands = await client.GetGlobalApplicationCommandsAsync();
-            var newCommands = _commands.Values.Where(command =>
-            !currentCommands.Any(c => c.Name == command.Name)).ToList();
+            List<ICommand> newCommands = new();
+            if (currentCommands != null)
+            {
+                newCommands = _commands.Values.Where(command =>
+                                                             !currentCommands.Any(c => c.Name == command.Name))
+                                           .ToList();
+            }
 
             if (!newCommands.Any())
             {
@@ -78,7 +95,7 @@ public class CommandHandler
             if (_commands.TryGetValue(command.Data.Name, out var cmd))
             {
                 Logger.Verbose($"Executing command {command.Data.Name}");
-                await cmd.Execute(interaction);
+                await Framework.RunOnTick(async ()=>await cmd.Execute(interaction));
             }
             else
             {

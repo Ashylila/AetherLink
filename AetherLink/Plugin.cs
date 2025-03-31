@@ -23,7 +23,6 @@ public sealed class Plugin : IDalamudPlugin
     private const string CommandName = "/aetherlink";
 
     public DiscordHandler DiscordHandler;
-    private CommandHandler CommandHandler;
     public Configuration Configuration { get; init; }
 
     public readonly WindowSystem WindowSystem = new("AetherLink");
@@ -37,7 +36,6 @@ public sealed class Plugin : IDalamudPlugin
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
 
         DiscordHandler = new DiscordHandler(this);
-        CommandHandler = new CommandHandler(DiscordHandler.discordClient);
 
         ConfigWindow = new ConfigWindow(this);
         MainWindow = new MainWindow(this);
@@ -68,7 +66,6 @@ public sealed class Plugin : IDalamudPlugin
 
     public void Dispose()
     {
-        this.Configuration.Save();
         WindowSystem.RemoveAllWindows();
 
         ConfigWindow.Dispose();

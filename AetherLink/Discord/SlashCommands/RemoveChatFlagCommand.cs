@@ -29,7 +29,7 @@ public class RemoveChatFlagCommand : ICommand
     {
         if (interaction is SocketSlashCommand command)
         {
-            var config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+            var config = Plugin.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             var flagToRemove = command.Data.Options.FirstOrDefault(x => x.Name == "flag")?.Value as string;
             if (!EnumHelper.IsValidEnumMember<XivChatType>(flagToRemove) || (EnumHelper.TryConvertToEnum<XivChatType>(flagToRemove, out var result) && !config.ChatTypes.Contains(result)))
             {
