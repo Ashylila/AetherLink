@@ -9,99 +9,76 @@ using System;
 using System.Threading.Tasks;
 using Discord;
 using System.Linq.Expressions;
+using AetherLink.Utility;
+using Discord.Interactions;
 
 namespace AetherLink.Discord;
 
 public class CommandHandler : IDisposable
 {
-    private IPluginLog Logger => Svc.Log;
-    private readonly Dictionary<string, ICommand> _commands = new();
-    private readonly DiscordSocketClient client;
+    private readonly IPluginLog _log;
+    private readonly DiscordSocketClient _client;
+    private readonly InteractionService _interactionService;
     private IFramework Framework => Svc.Framework;
 
-    public CommandHandler(DiscordSocketClient client)
+    public CommandHandler(DiscordSocketClient client, InteractionService interactionService, IPluginLog Log)
     {
-        this.client = client;
-        client.InteractionCreated += HandleCommand;
-        LoadCommands();
-        client.Ready += async () =>
-        {
-            await RegisterCommands();
-        };
+        _log = Log;
+        _client = client;
+        _interactionService = interactionService;
     }
+    
+    public async Task InitializeAsync()
+    {
+        var assembly = Assembly.GetExecutingAssembly();
 
-    public void Dispose()
-    {
-        client.InteractionCreated -= HandleCommand;
-    }
-
-    public async Task Init()
-    {
-        LoadCommands();
-        await RegisterCommands();
-    }
-    private void LoadCommands()
-    {
-        var commandTypes = Assembly.GetExecutingAssembly().GetTypes().Where(t => typeof(ICommand).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-        foreach (var type in commandTypes)
+        if (_interactionService == null)
         {
-            if (Activator.CreateInstance(type) is ICommand command)
-            {
-                _commands[command.Name] = command;
-            }
+            _log.Error("InteractionService is null!");
+            return;
         }
+
+        if (ServiceWrapper.Services == null)
+        {
+            _log.Error("ServiceProvider is null!");
+            return;
+        }
+
+        await _interactionService.AddModulesAsync(assembly, ServiceWrapper.Services);
+        try
+        {
+            await _interactionService.RegisterCommandsGloballyAsync();
+            _log.Information("Interaction modules loaded.");
+        }catch (Exception ex)
+        {
+            _log.Error(ex, "Failed to register commands globally.");
+        }
+
+        _client.InteractionCreated += HandleInteraction;
+        
     }
-    private async Task RegisterCommands()
+
+    private async Task HandleInteraction(SocketInteraction interaction)
     {
         try
         {
-            Logger.Info("Registering commands");
-            var currentCommands = await client.GetGlobalApplicationCommandsAsync();
-            List<ICommand> newCommands = new();
-            if (currentCommands != null)
+            var context = new SocketInteractionContext(_client, interaction);
+            if (interaction is SocketSlashCommand slashCommand)
             {
-                newCommands = _commands.Values.Where(command =>
-                                                             !currentCommands.Any(c => c.Name == command.Name))
-                                           .ToList();
+                _log.Debug($"[{DateTime.Now.TimeOfDay}] {interaction.User} has executed the command {slashCommand.CommandName}");
             }
-
-            if (!newCommands.Any())
+            var result = await _interactionService.ExecuteCommandAsync(context, ServiceWrapper.Services);
+            if (!result.IsSuccess)
             {
-                Logger.Info("No new commands to register.");
-                return;
+                await interaction.RespondAsync(result.ErrorReason);
             }
-            foreach (var command in newCommands)
-            {
-                SlashCommandBuilder commandBuilder = new SlashCommandBuilder()
-                    .WithName(command.Name)
-                    .WithDescription(command.Description);
-                foreach (var option in command.Options.Where(opt => !string.IsNullOrEmpty(opt.Name) ))
-                {
-                    commandBuilder.AddOption(name: option.Name, type: option.Type, description: option.Description, isRequired: option.IsRequired, isAutocomplete: option.IsAutoFill);
-                }
-                await client.Rest.CreateGlobalCommand(commandBuilder.Build());
-                Logger.Debug($"Command {command.Name} registered");
-            }
-        }
-        catch (Exception e)
+        }catch (Exception ex)
         {
-            Logger.Error(e, "Failed to register commands");
+            _log.Error($"Exception while handling interaction: {ex.Message}");
         }
     }
-    private async Task HandleCommand(SocketInteraction interaction)
+    public void Dispose()
     {
-        if (interaction is SocketSlashCommand command)
-        {
-            if (_commands.TryGetValue(command.Data.Name, out var cmd))
-            {
-                Logger.Verbose($"Executing command {command.Data.Name}");
-                await Framework.RunOnTick(async ()=>await cmd.Execute(interaction));
-            }
-            else
-            {
-                Logger.Warning($"Command {command.Data.Name} not found");
-                await interaction.RespondAsync("Command not found", ephemeral: true);
-            }
-        }
+        _client.InteractionCreated -= HandleInteraction;
     }
 }

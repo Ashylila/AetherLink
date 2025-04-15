@@ -8,33 +8,34 @@ using System.Collections.Generic;
 using System.Reflection;
 using System;
 using AetherLink.DalamudServices;
+using Discord.Interactions;
 
 namespace AetherLink.Discord.SlashCommands;
 
-public class EnableCommand : ICommand
+public class EnableCommand : InteractionModuleBase<SocketInteractionContext>
 {
-    public string Name => "enable";
-    public string Description => "Enable the bot.";
-    public List<CommandOption> Options { get; } = new();
-
-    public async Task Execute(SocketInteraction interaction)
+    private Configuration _configuration;
+    
+    public EnableCommand(Configuration config)
     {
-        if (interaction is SocketSlashCommand command)
-        {
-            var configuration = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            if (configuration.IsChatLogEnabled)
+        _configuration = config;
+    }
+    [SlashCommand("enable", "Enable the logging of the chat.")]
+    public async Task Execute()
+    {
+        
+            if (_configuration.IsChatLogEnabled)
             {
-                await interaction.RespondAsync("The logging of the chat is already enabled", ephemeral: true);
+                await RespondAsync("The logging of the chat is already enabled", ephemeral: true);
                 await Task.Delay(5000);
-                await interaction.DeleteOriginalResponseAsync();
+                await DeleteOriginalResponseAsync();
                 return;
             }
-            configuration.IsChatLogEnabled = true;
-            configuration.Save();
-            await interaction.RespondAsync("The logging of the chat has been enabled", ephemeral: true);
+            _configuration.IsChatLogEnabled = true;
+            _configuration.Save();
+            await RespondAsync("The logging of the chat has been enabled", ephemeral: true);
             await Task.Delay(5000);
-            await interaction.DeleteOriginalResponseAsync();
-            return;
-        }
+            await DeleteOriginalResponseAsync();
+        
     }
 }

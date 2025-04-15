@@ -5,33 +5,17 @@ using System.Linq;
 using AetherLink.Utility;
 using System.Collections.Generic;
 using Discord;
+using Discord.Interactions;
 
 namespace AetherLink.Discord.SlashCommands;
-public class SendMessageCommand : ICommand
+public class SendMessageCommand : InteractionModuleBase<SocketInteractionContext>
 {
-    public string Name => "sendmessage";
-    public string Description => "Send a message to the chat.";
-    public List<CommandOption> Options { get; } = new()
+    [SlashCommand("send", "Send a message to the chat")]
+    public async Task Execute([Summary("message", "the message to send")] string chatmessage)
     {
-        new CommandOption()
-        {
-            Name = "message",
-            Description = "The message to send",
-            Type = ApplicationCommandOptionType.String,
-            IsRequired = true,
-        },
-    };
-
-    public async Task Execute(SocketInteraction interaction)
-    {
-        if (interaction is SocketSlashCommand command)
-        {
-            var chatmessage = command.Data.Options.FirstOrDefault(x => x.Name == "message")?.Value as string;
             ChatMessageSender.SendChatMessage(chatmessage);
-            await interaction.RespondAsync($"Message has been sent to the chat: {chatmessage}", ephemeral: true);
+            await RespondAsync($"Message has been sent to the chat: {chatmessage}", ephemeral: true);
             await Task.Delay(5000);
-            await interaction.DeleteOriginalResponseAsync();
-            return;
+            await DeleteOriginalResponseAsync();
         }
     }
-}

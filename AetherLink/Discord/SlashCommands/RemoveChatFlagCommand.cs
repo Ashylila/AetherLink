@@ -8,43 +8,31 @@ using Dalamud.Game.Text;
 using AetherLink.DalamudServices;
 using Discord;
 using System.Collections.Generic;
+using Discord.Interactions;
 
 namespace AetherLink.Discord.SlashCommands;
-public class RemoveChatFlagCommand : ICommand
+public class RemoveChatFlagCommand : InteractionModuleBase<SocketInteractionContext>
 {
-    public string Name => "removechatflag";
-    public string Description => "Remove a chat flag.";
-    public List<CommandOption> Options => new List<CommandOption>
+    private Configuration _config;
+    
+    public RemoveChatFlagCommand(Configuration config)
     {
-        new CommandOption
-        {
-            Type = ApplicationCommandOptionType.String,
-            Name = "flag",
-            Description = "The chat flag to remove.",
-            IsRequired = true,
-            IsAutoFill = true
-    }};
-
-    public async Task Execute(SocketInteraction interaction)
+        _config = config;
+    }
+    [SlashCommand("removechatflag", "Remove a chat flag.")]
+    public async Task Execute([Summary("flag", "the flag to remove")]string flagToRemove)
     {
-        if (interaction is SocketSlashCommand command)
-        {
-            var config = Plugin.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            var flagToRemove = command.Data.Options.FirstOrDefault(x => x.Name == "flag")?.Value as string;
-            if (!EnumHelper.IsValidEnumMember<XivChatType>(flagToRemove) || (EnumHelper.TryConvertToEnum<XivChatType>(flagToRemove, out var result) && !config.ChatTypes.Contains(result)))
+            if (!EnumHelper.IsValidEnumMember<XivChatType>(flagToRemove) || (EnumHelper.TryConvertToEnum<XivChatType>(flagToRemove, out var result) && !_config.ChatTypes.Contains(result)))
             {
-                await interaction.RespondAsync("Invalid flag or it is already inactive.", ephemeral: true);
+                await RespondAsync("Invalid flag or it is already inactive.", ephemeral: true);
                 await Task.Delay(5000);
-                await interaction.DeleteOriginalResponseAsync();
+                await DeleteOriginalResponseAsync();
                 return;
             }
-            Svc.Log.Debug($"Flag: {flagToRemove}");
-            config.ChatTypes.Remove(result);
-            config.Save();
-            await interaction.RespondAsync($"Flag {flagToRemove} has been removed", ephemeral: true);
+            _config.ChatTypes.Remove(result);
+            _config.Save();
+            await RespondAsync($"Flag {flagToRemove} has been removed", ephemeral: true);
             await Task.Delay(5000);
-            await interaction.DeleteOriginalResponseAsync();
-            return;
-        }
+            await DeleteOriginalResponseAsync();
     }
 }

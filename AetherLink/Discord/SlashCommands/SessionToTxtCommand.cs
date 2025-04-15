@@ -8,27 +8,33 @@ using System.Collections.Generic;
 using System.IO;
 using AetherLink.DalamudServices;
 using System;
+using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
+using Discord.Interactions;
 
 namespace AetherLink.Discord.SlashCommands;
-public class SessionToTxtCommand : ICommand
+public class SessionToTxtCommand : InteractionModuleBase<SocketInteractionContext>
 {
-    public string Name => "sessiontotxt";
-    public string Description => "Send the current chat log session to DM.";
-    public List<CommandOption> Options { get; } = new List<CommandOption>();
+    private readonly IPluginLog _log;
+    private readonly IDalamudPluginInterface _interface;
 
-    public async Task Execute(SocketInteraction interaction)
+    public SessionToTxtCommand(IPluginLog log, IDalamudPluginInterface pluginInterface)
     {
-        if (interaction is SocketSlashCommand command)
-        {
+        _log = log;
+        _interface = pluginInterface;
+    }
+    [SlashCommand("sessiontotxt", "Send the current chat log session to DM")]
+    public async Task Execute()
+    {
             try
             {
-                string filePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
+                string filePath = Path.Combine(_interface.AssemblyLocation.Directory.FullName, "chatlog.txt");
                 string chatLog = File.ReadAllText(filePath);
                 List<ChatMessage> chatJson = JsonSerializer.Deserialize<List<ChatMessage>>(chatLog) ?? new List<ChatMessage>();
 
-                // Create a temp file for the formatted chat log
+                
                 string tempFilePath = Path.GetTempFileName();
-                using (StreamWriter writer = new StreamWriter(tempFilePath))
+                await using (StreamWriter writer = new StreamWriter(tempFilePath))
                 {
                     foreach (var message in chatJson)
                     {
@@ -36,16 +42,13 @@ public class SessionToTxtCommand : ICommand
                     }
                 }
 
-                // Send file as attachment
-                await interaction.RespondWithFileAsync(tempFilePath, "chatlog.txt", "Here is the chat log session.");
-
-                // Optional: Delete the temp file after sending
+                
+                await RespondWithFileAsync(tempFilePath, "chatlog.txt", "Here is the chat log session.");
                 File.Delete(tempFilePath);
             }
             catch (Exception ex)
             {
-                Svc.Log.Error(ex, "Failed to send session to DM");
+                _log.Error(ex, "Failed to send session to DM");
             }
-        }
     }
 }

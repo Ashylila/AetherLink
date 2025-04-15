@@ -18,27 +18,19 @@ namespace AetherLink.Discord
 {
     public class DiscordHandler : IDisposable
     {
-        static IPluginLog Logger => Svc.Log;
+        private static IPluginLog Logger;
         public static List<ChatMessage> chatMessages = new();
-        internal readonly DiscordSocketClient discordClient;
-        private Configuration configuration => Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-        private IChatGui chatGui => Svc.Chat;
-        private readonly Plugin plugin;
+        private readonly DiscordSocketClient discordClient;
+        private Configuration configuration;
+        private IChatGui chatGui;
 
         public bool isConnected => this.discordClient.ConnectionState == ConnectionState.Connected;
-        public ulong UserId => this.discordClient.CurrentUser.Id;
-        private readonly CommandHandler commandHandler;
-        private readonly ChatHandler chatHandler;
-        public DiscordHandler(Plugin plugin)
+        public DiscordHandler(DiscordSocketClient client, Configuration config, IChatGui chatGui, IPluginLog logger)
         {
-            this.plugin = plugin;
-            this.discordClient = new(new DiscordSocketConfig()
-            {
-                MessageCacheSize = 20,
-                GatewayIntents = GatewayIntents.AllUnprivileged | GatewayIntents.GuildMessages | GatewayIntents.GuildWebhooks | GatewayIntents.MessageContent,
-            });
-            commandHandler = new CommandHandler(discordClient);
-            chatHandler = new ChatHandler(discordClient, plugin);
+            Logger = logger;
+            this.chatGui = chatGui;
+            this.configuration = config;
+            this.discordClient = client;
             configuration.OnDiscordTokenChanged += TokenChanged;
         }
         public async Task TokenChanged(string changedValue)
@@ -60,8 +52,6 @@ namespace AetherLink.Discord
             {
                 await this.discordClient.LoginAsync(TokenType.Bot, configuration.DiscordToken);
                 await this.discordClient.StartAsync();
-                chatHandler.Init();
-                this.discordClient.AutocompleteExecuted += HandleAutoComplete;
             }
             catch (HttpException httpEx)
             {
@@ -101,13 +91,7 @@ namespace AetherLink.Discord
         }
         public void Dispose()
         {
-            plugin.Configuration.OnDiscordTokenChanged -= TokenChanged;
-            commandHandler.Dispose();
-            if (discordClient != null)
-            {
-                discordClient.Dispose();
-            }
-
+            configuration.OnDiscordTokenChanged -= TokenChanged;
         }
     }
 }

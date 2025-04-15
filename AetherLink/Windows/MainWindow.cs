@@ -1,8 +1,11 @@
 using System;
 using System.Numerics;
+using AetherLink.Discord;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
+using Dalamud.Plugin.Services;
+using Discord.WebSocket;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
 
@@ -10,14 +13,16 @@ namespace AetherLink.Windows;
 
 public class MainWindow : Window, IDisposable
 {
-    private Plugin Plugin;
+    private DiscordHandler _discordClient;
     private Configuration configuration;
-    public MainWindow(Plugin plugin)
+    private readonly Plugin plugin;
+    public MainWindow(DiscordHandler client, Configuration config, Plugin plugin)
         : base("AetherLink##With a hidden ID", ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
+        _discordClient = client;
         Size = new Vector2(150, 100);
-        Plugin = plugin;
-        configuration = plugin.Configuration;
+        configuration = config;
+        this.plugin = plugin;
     }
 
     public void Dispose() { }
@@ -27,15 +32,15 @@ public class MainWindow : Window, IDisposable
 
         if (ImGui.Button("Show Settings"))
         {
-            Plugin.ToggleConfigUI();
+            plugin.ToggleConfigUI();
         }
 
         ImGui.Spacing();
         ImGui.Spacing();
         ImGui.TextUnformatted("Bot status:  ");
         ImGui.SameLine();
-        ImGui.PushStyleColor(ImGuiCol.Text, Plugin.DiscordHandler.isConnected ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1));
-        ImGui.TextUnformatted(Plugin.DiscordHandler.isConnected ? "Running" : "Stopped");
+        ImGui.PushStyleColor(ImGuiCol.Text, _discordClient.isConnected ? new Vector4(0, 1, 0, 1) : new Vector4(1, 0, 0, 1));
+        ImGui.TextUnformatted(_discordClient.isConnected ? "Running" : "Stopped");
         ImGui.PopStyleColor();
 
     }

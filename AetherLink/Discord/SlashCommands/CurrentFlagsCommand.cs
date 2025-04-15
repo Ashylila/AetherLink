@@ -7,28 +7,29 @@ using Discord;
 using System.Collections.Generic;
 using AetherLink.DalamudServices;
 using AetherLink;
+using Discord.Interactions;
 
 namespace AetherLink.Discord.SlashCommands;
 
-public class CurrentFlagsCommand : ICommand
+public class CurrentFlagsCommand : InteractionModuleBase<SocketInteractionContext>
 {
-    public string Name => "currentflags";
-    public string Description => "View the current chat flags.";
-    public List<CommandOption> Options { get; } = new();
-
-    public async Task Execute(SocketInteraction interaction)
+    private Configuration _configuration;
+    
+    public CurrentFlagsCommand(Configuration config)
     {
-        if (interaction is SocketSlashCommand command)
-        {
-            var config = Plugin.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-            var flags = string.Join("\n", config.ChatTypes.Select(flag => $"• {flag}"));
+        _configuration = config;
+    }
+
+    public async Task Execute()
+    {
+            
+            var flags = string.Join("\n", _configuration.ChatTypes.Select(flag => $"• {flag}"));
             var embed = new EmbedBuilder()
                 .WithTitle("Here are the current active flags:")
                 .WithDescription(flags)
                 .WithColor(Color.Blue)
                 .Build();
-            await interaction.RespondAsync(embed: embed);
-            return;
-        }
+            await RespondAsync(embed: embed);
+        
     }
 }

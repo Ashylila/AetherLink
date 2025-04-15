@@ -1,45 +1,49 @@
+using System;
 using Dalamud.Game.Command;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using System.IO;
+using System.Threading.Tasks;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using AetherLink.Windows;
 using AetherLink.DalamudServices;
 using AetherLink.Discord;
+using AetherLink.Utility;
+using Discord;
+using Discord.Interactions;
 using Discord.Rest;
+using Discord.WebSocket;
+using Serilog.Core;
 
 namespace AetherLink;
 
 public sealed class Plugin : IDalamudPlugin
 {
     [PluginService] internal static IDalamudPluginInterface PluginInterface { get; private set; } = null!;
-    [PluginService] internal static ITextureProvider TextureProvider { get; private set; } = null!;
     [PluginService] internal static ICommandManager CommandManager { get; private set; } = null!;
-    [PluginService] internal static IClientState ClientState { get; private set; } = null!;
-    [PluginService] internal static IDataManager DataManager { get; private set; } = null!;
-    internal static IPluginLog Log  => Svc.Log;
 
     private const string CommandName = "/aetherlink";
-
-    public DiscordHandler DiscordHandler;
+    
+    private IPluginLog Logger;
     public Configuration Configuration { get; init; }
 
     public readonly WindowSystem WindowSystem = new("AetherLink");
     private ConfigWindow ConfigWindow { get; init; }
     private MainWindow MainWindow { get; init; }
     private LogWindow LogWindow { get; init; }
+    private DiscordSocketClient _client;
 
     public Plugin()
     {
-        Svc.Init(PluginInterface);
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-
-        DiscordHandler = new DiscordHandler(this);
-
-        ConfigWindow = new ConfigWindow(this);
-        MainWindow = new MainWindow(this);
-        LogWindow = new LogWindow(this);
+        ServiceWrapper.Init(PluginInterface, this);
+        
+        _client = ServiceWrapper.Get<DiscordSocketClient>();
+            
+        ConfigWindow = ServiceWrapper.Get<ConfigWindow>();
+        MainWindow = ServiceWrapper.Get<MainWindow>();
+        LogWindow = ServiceWrapper.Get<LogWindow>();
         
         WindowSystem.AddWindow(ConfigWindow);
         WindowSystem.AddWindow(MainWindow);
@@ -55,28 +59,37 @@ public sealed class Plugin : IDalamudPlugin
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfigUI;
 
         PluginInterface.UiBuilder.OpenMainUi += ToggleMainUI;
-
+        
+        Logger = ServiceWrapper.Get<IPluginLog>();
+        
+        _client.Log += LogAsync;
+        ServiceWrapper.Get<InteractionService>().Log += LogAsync;
         Init();
     }
 
-    private async void Init()
+    private async Task Init()
     {
-        await DiscordHandler._init();
+        await ServiceWrapper.Get<DiscordHandler>()._init();
+        _client.Ready += async () => await ServiceWrapper.Get<CommandHandler>().InitializeAsync();
+        ServiceWrapper.Get<ChatHandler>().Init();
     }
-
+    private Task LogAsync(LogMessage logMessage)
+    {
+        Logger.Debug(logMessage.Message);
+        return Task.CompletedTask;
+    }
     public void Dispose()
     {
+        if (ServiceWrapper.Services is IDisposable disposable)
+        {
+            disposable.Dispose();
+        }
         WindowSystem.RemoveAllWindows();
-
-        ConfigWindow.Dispose();
-        MainWindow.Dispose();
-        DiscordHandler.Dispose();
         CommandManager.RemoveHandler(CommandName);
     }
 
     private void OnCommand(string command, string args)
     {
-        Log.Verbose(args);
         switch (args.ToLower())
         {
             case "":

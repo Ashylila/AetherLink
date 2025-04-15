@@ -15,14 +15,18 @@ using System.IO;
 using Discord.Net;
 using Lumina.Excel.Sheets;
 using System.Text.Json;
+using Dalamud.Plugin;
 using Serilog;
 
 namespace AetherLink.Discord;
 
-public class ChatHandler(DiscordSocketClient client, Plugin plugin) : IDisposable
+public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui, IPluginLog log, IDataManager data, IClientState clientState, IDalamudPluginInterface PI) : IDisposable
 {
-    private IChatGui ChatGui => Svc.Chat;
-    private IPluginLog Logger => Svc.Log;
+    private readonly IDalamudPluginInterface PluginInterface = PI;
+    private readonly IClientState ClientState = clientState;
+    private readonly IDataManager Data = data;
+    private IChatGui ChatGui = gui;
+    private IPluginLog Logger = log;
     private DiscordSocketClient client = client;
     private Plugin plugin =  plugin;
     public void Init()
@@ -65,7 +69,7 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin) : IDisposabl
     }
     private string GetHomeWorld(string name)
     {
-        var WorldList = Svc.Data.GetExcelSheet<World>().Select(world => world.Name.ToString()).Where(name => !string.IsNullOrEmpty(name)).ToHashSet();
+        var WorldList = Data.GetExcelSheet<World>().Select(world => world.Name.ToString()).Where(name => !string.IsNullOrEmpty(name)).ToHashSet();
         string senderworld;
         if (WorldList.Any(world => name.Contains(world, StringComparison.OrdinalIgnoreCase)))
         {
@@ -73,14 +77,14 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin) : IDisposabl
         }
         else
         {
-            senderworld = Svc.ClientState.LocalPlayer.HomeWorld.Value.Name.ToString();
+            senderworld = ClientState.LocalPlayer.HomeWorld.Value.Name.ToString();
         }
         return senderworld ?? "World not found";
     }
 
     private List<ChatMessage> GetChatLog()
     {
-        string filePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
+        string filePath = Path.Combine(PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
         string chatLog;
         if (File.Exists(filePath))
         {
@@ -131,7 +135,7 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin) : IDisposabl
     
     private void SaveChatLog(List<ChatMessage> chat)
     {
-        var filePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
+        var filePath = Path.Combine(PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
         File.WriteAllText(filePath, JsonSerializer.Serialize(chat, new JsonSerializerOptions { WriteIndented = true }));
     }
     private Color GetColorForType(XivChatType type)
