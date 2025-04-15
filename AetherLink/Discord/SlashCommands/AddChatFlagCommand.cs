@@ -9,6 +9,7 @@ using AetherLink.DalamudServices;
 using AetherLink;
 using Discord;
 using System.Collections.Generic;
+using AetherLink.Discord.AutoFillHandlers;
 using Discord.Interactions;
 
 namespace AetherLink.Discord.SlashCommands;
@@ -21,7 +22,7 @@ public class AddChatFlagCommand : InteractionModuleBase<SocketInteractionContext
         _configuration = config;
     }
     [SlashCommand("addchatflag", "Add a chat flag.")]
-    public async Task Execute([Summary("flag", "The chat flag to add.")] string flag)
+    public async Task Execute([Summary("flag", "The chat flag to add.")][Autocomplete(typeof(FlagAutocompleteHandler))] string flag)
     {
         
             

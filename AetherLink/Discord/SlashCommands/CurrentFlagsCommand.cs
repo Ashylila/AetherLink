@@ -19,7 +19,7 @@ public class CurrentFlagsCommand : InteractionModuleBase<SocketInteractionContex
     {
         _configuration = config;
     }
-
+[SlashCommand("currentflags", "Show the current active flags.")]
     public async Task Execute()
     {
             
