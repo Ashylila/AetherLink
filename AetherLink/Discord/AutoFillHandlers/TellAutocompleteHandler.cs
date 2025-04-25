@@ -6,7 +6,7 @@ using Discord.Interactions;
 
 namespace AetherLink.Discord.AutoFillHandlers;
 
-public class TellHandler : AutocompleteHandler
+public class TellAutocompleteHandler : AutocompleteHandler
 {
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
         IInteractionContext context,IAutocompleteInteraction Interaction,IParameterInfo parameter, IServiceProvider services)

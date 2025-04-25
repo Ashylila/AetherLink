@@ -12,6 +12,7 @@ public class ConfigWindow : Window, IDisposable
 {
     private IPluginLog Log => Svc.Log;
     private Configuration Configuration;
+    private readonly Plugin plugin;
     private string discordUserId = string.Empty;
     private string discordBotToken = string.Empty;
     public ConfigWindow(Plugin plugin) : base("AetherLink Config###ID")
@@ -19,10 +20,11 @@ public class ConfigWindow : Window, IDisposable
         Flags = ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoScrollbar |
                 ImGuiWindowFlags.NoScrollWithMouse;
 
-        Size = new Vector2(450, 115);
+        Size = new Vector2(450, 135);
         SizeCondition = ImGuiCond.Always;
 
         Configuration = plugin.Configuration;
+        this.plugin = plugin;
     }
 
     public void Dispose() { }
@@ -50,6 +52,11 @@ public class ConfigWindow : Window, IDisposable
             Configuration.Save();
             discordBotToken = string.Empty;
             discordUserId = string.Empty;
+        }
+
+        if (ImGui.Button("Restart"))
+        {
+            plugin.Restart();
         }
     }
 }

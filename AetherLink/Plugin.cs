@@ -33,12 +33,14 @@ public sealed class Plugin : IDalamudPlugin
     private MainWindow MainWindow { get; init; }
     private LogWindow LogWindow { get; init; }
     private DiscordSocketClient _client;
+    private readonly DiscordHandler _discordHandler;
 
     public Plugin()
     {
         Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         ServiceWrapper.Init(PluginInterface, this);
         
+        _discordHandler = ServiceWrapper.Get<DiscordHandler>();
         _client = ServiceWrapper.Get<DiscordSocketClient>();
             
         ConfigWindow = ServiceWrapper.Get<ConfigWindow>();
@@ -69,9 +71,31 @@ public sealed class Plugin : IDalamudPlugin
 
     private async Task Init()
     {
-        await ServiceWrapper.Get<DiscordHandler>()._init();
+        _discordHandler._init();
         _client.Ready += async () => await ServiceWrapper.Get<CommandHandler>().InitializeAsync();
         ServiceWrapper.Get<ChatHandler>().Init();
+    }
+
+    public async Task Restart()
+    {
+        try
+        {
+            if (_client.ConnectionState == ConnectionState.Connected)
+            {
+                await _client.StopAsync();
+                await _client.LoginAsync(TokenType.Bot, Configuration.DiscordToken);
+                await _client.StartAsync();
+            }
+            else
+            {
+                await _client.LoginAsync(TokenType.Bot, Configuration.DiscordToken);
+                await _client.StartAsync();
+            }
+        }
+        catch (Exception e)
+        {
+            Logger.Error("Error while restarting bot: {0}", e.Message);
+        }
     }
     private Task LogAsync(LogMessage logMessage)
     {

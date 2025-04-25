@@ -19,10 +19,12 @@ public class CommandHandler : IDisposable
     private readonly IPluginLog _log;
     private readonly DiscordSocketClient _client;
     private readonly InteractionService _interactionService;
+    private readonly IChatGui _chatGui;
     private IFramework Framework => Svc.Framework;
 
-    public CommandHandler(DiscordSocketClient client, InteractionService interactionService, IPluginLog Log)
+    public CommandHandler(DiscordSocketClient client, InteractionService interactionService, IPluginLog Log, IChatGui chatGui)
     {
+        _chatGui = chatGui;
         _log = Log;
         _client = client;
         _interactionService = interactionService;
@@ -52,6 +54,7 @@ public class CommandHandler : IDisposable
         }catch (Exception ex)
         {
             _log.Error(ex, "Failed to register commands globally.");
+            _chatGui.PrintError("Failed to register commands globally, you can try to restart the process in the config window.", messageTag: "AetherLink", tagColor: 51447);
         }
 
         _client.InteractionCreated += HandleInteraction;

@@ -62,7 +62,7 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
                     .WithDescription(message.TextValue)
                     .WithTimestamp(chatMessage.Timestamp)
                     .WithColor(GetColorForType(type))
-                    .Build();
+                    .Build();  
         _ = SendMessageToDm(embed);
 
 
