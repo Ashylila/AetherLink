@@ -32,6 +32,7 @@ To use AetherLink, you need a Discord bot with the correct permissions.
 2. Click **New Application** and enter a name
 3. Navigate to the **Bot** tab and click **Add Bot**
 4. Copy the **Token** (you'll need this later)
+5. Also be sure to enable the priviliged gateway intents
 
 ![Discord Bot Setup](image_url)
 
@@ -41,7 +42,7 @@ To use AetherLink, you need a Discord bot with the correct permissions.
 3. Under **Bot Permissions**, enable:
    - Read Messages
    - Send Messages
-   - Manage Messages (optional)
+   - Manage Messages
 4. Copy the generated URL and paste it in your browser
 5. Select your server and authorize the bot
 
@@ -62,7 +63,6 @@ Open the AetherLink plugin settings in-game and enter:
 ## Usage
 - Use commands to send messages in-game.
 - Works on both desktop and mobile Discord!
-- Send messages in Discord to see them appear in FFXIV.
 
 ## Contributing
 Feel free to submit issues or pull requests to improve AetherLink.
