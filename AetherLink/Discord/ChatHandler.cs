@@ -71,7 +71,7 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
     {
         var WorldList = Data.GetExcelSheet<World>().Select(world => world.Name.ToString()).Where(name => !string.IsNullOrEmpty(name)).ToHashSet();
         string senderworld;
-        if (WorldList.Any(world => name.Contains(world, StringComparison.OrdinalIgnoreCase)))
+        if (WorldList.Any(world => name.EndsWith(world, StringComparison.OrdinalIgnoreCase))) //changed from .Contains to EndsWith, but could still cause names to be cut if the sender has the same homeworld as the player, in which case there is no sender world appended at the end and if the playername contains a world name
         {
             senderworld = WorldList.FirstOrDefault(world => name.Contains(world, StringComparison.OrdinalIgnoreCase));
         }
