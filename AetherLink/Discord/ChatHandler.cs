@@ -15,6 +15,7 @@ using System.IO;
 using Discord.Net;
 using Lumina.Excel.Sheets;
 using System.Text.Json;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Plugin;
 using Serilog;
 
@@ -43,8 +44,9 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
         XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if(!plugin.Configuration.ChatTypes.Contains(type) ||  !plugin.Configuration.IsChatLogEnabled) return;
-        var senderWorld = GetHomeWorld(sender.ToString());
-        var pureSender = sender.TextValue.Replace(senderWorld, "");
+        var playerPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
+        var pureSender = playerPayload != null ? playerPayload.PlayerName : sender.TextValue;
+        var senderWorld = playerPayload != null ? playerPayload.World.Value.InternalName.ExtractText() : "";
 
         var chatLog = GetChatLog();
         var chatMessage = new ChatMessage
@@ -66,20 +68,6 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
         _ = SendMessageToDm(embed);
 
 
-    }
-    private string GetHomeWorld(string name)
-    {
-        var WorldList = Data.GetExcelSheet<World>().Select(world => world.Name.ToString()).Where(name => !string.IsNullOrEmpty(name)).ToHashSet();
-        string senderworld;
-        if (WorldList.Any(world => name.EndsWith(world, StringComparison.OrdinalIgnoreCase))) //changed from .Contains to EndsWith, but could still cause names to be cut if the sender has the same homeworld as the player, in which case there is no sender world appended at the end and if the playername contains a world name
-        {
-            senderworld = WorldList.FirstOrDefault(world => name.Contains(world, StringComparison.OrdinalIgnoreCase));
-        }
-        else
-        {
-            senderworld = ClientState.LocalPlayer.HomeWorld.Value.Name.ToString();
-        }
-        return senderworld ?? "World not found";
     }
 
     private List<ChatMessage> GetChatLog()
