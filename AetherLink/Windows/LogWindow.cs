@@ -32,15 +32,14 @@ public class LogWindow : Window, IDisposable
         Size = new Vector2(displaySize.X * 0.8f, displaySize.Y * 0.8f);
         Plugin = plugin;
         configuration = plugin.Configuration;
-        FilePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.txt");
+        FilePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.Directory.FullName, "chatlog.ndjson");
     }
     public override void Draw()
     {
         if (File.GetLastWriteTime(FilePath) > lastReadTime || lastReadTime == DateTime.MinValue) // Check if file changed
         {
             lastReadTime = File.GetLastWriteTime(FilePath);
-            LogContent = File.ReadAllText(FilePath);
-            Chatlog = JsonSerializer.Deserialize<List<ChatMessage>>(LogContent) ?? new List<ChatMessage>();
+            LoadExistingChatLog();
         }   
         ImGui.BeginChild("FilterControls", new Vector2(0, 50), false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
         
@@ -114,6 +113,24 @@ public class LogWindow : Window, IDisposable
             "Party" => new Vector4(0.0f, 0.0f, 1.0f, 1.0f), // Blue
             _ => new Vector4(0.75f, 0.75f, 0.75f, 1.0f), // LightGrey
             };
+        }
+        private void LoadExistingChatLog()
+        {
+            if (!File.Exists(FilePath)) return;
+
+            try
+            {
+                foreach (var line in File.ReadLines(FilePath))
+                {
+                    var msg = JsonSerializer.Deserialize<ChatMessage>(line);
+                    if (msg != null)
+                        Chatlog.Add(msg);
+                }
+            }
+            catch (Exception ex)
+            {
+                Svc.Log.Error(ex, "Failed to load chatlog.ndjson");
+            }
         }
     public void Dispose() 
     {
