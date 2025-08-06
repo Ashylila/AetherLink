@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.SDK/12.0.2">
+<Project Sdk="Dalamud.NET.SDK/13.0.0">
   <PropertyGroup>
     <Version>0.81</Version>
     <Description>Seamlessly connect your FFXIV in-game chat with Discord! Receive messages from a Discord bot directly in-game and reply using simple chat commands. Keep your Free Company, Linkshell, or party in sync, no matter where you are..</Description>
@@ -11,7 +11,7 @@
     <Content Include="AetherLink.json" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="DalamudPackager" Version="12.0.0" />
+    <PackageReference Update="DalamudPackager" Version="13.0.0" />
     <PackageReference Include="Discord.Net" Version="3.17.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
   </ItemGroup>

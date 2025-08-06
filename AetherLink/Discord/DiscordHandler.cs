@@ -8,12 +8,7 @@ using System.Threading.Tasks;
 using Dalamud.Game.Text;
 using AetherLink.Models;
 using AetherLink.Utility;
-using AetherLink.DalamudServices;
-using Dalamud.Interface.Utility.Raii;
 using Discord.Net;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using ImGuiNET;
-using Serilog;
 
 
 namespace AetherLink.Discord
