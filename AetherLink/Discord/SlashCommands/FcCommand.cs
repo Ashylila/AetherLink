@@ -14,9 +14,10 @@ public class FcCommand : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("fc", "Send a message to the Free Company")]
     public async Task Execute([Summary("message", "the message to send")] string fcmessage)
     {
-            ChatMessageSender.SendFreeCompanyMessage(fcmessage);
+        var success = ChatMessageSender.SendFreeCompanyMessage(fcmessage);
+        if (success)
             await RespondAsync($"Message has been sent to the Free Company: {fcmessage}", ephemeral: true);
-            await Task.Delay(5000);
-            await DeleteOriginalResponseAsync();
+        else
+            await RespondAsync("❌ Failed to send Free Company message.", ephemeral: true);
     }
 }

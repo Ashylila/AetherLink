@@ -13,9 +13,10 @@ public class ReplyCommand : InteractionModuleBase<SocketInteractionContext>
     [SlashCommand("reply", "Send a message to the last person who messaged you")]
     public async Task Execute([Summary("message", "the message to send")] string replymessage)
     {
-            ChatMessageSender.SendChatMessage("/r " + replymessage);
-            await RespondAsync($"responded with {replymessage}", ephemeral: true);
-            await Task.Delay(5000);
-            await DeleteOriginalResponseAsync();
+        var success = ChatMessageSender.SendChatMessage("/r " + replymessage);
+        if (success)
+            await RespondAsync($"Responded with: {replymessage}", ephemeral: true);
+        else
+            await RespondAsync("❌ Failed to send reply.", ephemeral: true);
     }
 }

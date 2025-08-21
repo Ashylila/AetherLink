@@ -13,10 +13,18 @@ public class SayCommand : InteractionModuleBase<SocketInteractionContext>
 [SlashCommand("say", "Send a message to the say chat")]
     public async Task Execute([Summary("message", "the message to send")] string saymessage)
     {
-            if(saymessage == null) return;
-            ChatMessageSender.SendSayMessage(saymessage);
-            await RespondAsync($"Message has been sent to the say chat: {saymessage}", ephemeral: true);
-            await Task.Delay(5000);
-            await DeleteOriginalResponseAsync();
+        if (string.IsNullOrWhiteSpace(saymessage))
+        {
+            await RespondAsync("Message cannot be empty.", ephemeral: true);
+            return;
+        }
+
+        var success = ChatMessageSender.SendSayMessage(saymessage);
+
+        if (success)
+            await RespondAsync($"Message has been sent to /say: {saymessage}", ephemeral: true);
+        else
+            await RespondAsync("❌ Failed to send the message to /say.", ephemeral: true);
+        
     }
 }

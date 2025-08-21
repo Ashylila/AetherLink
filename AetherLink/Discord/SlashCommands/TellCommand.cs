@@ -12,11 +12,14 @@ namespace AetherLink.Discord.SlashCommands;
 public class TellCommand : InteractionModuleBase<SocketInteractionContext>
 {
 [SlashCommand("tell", "Send a message to another player.")]
-    public async Task Execute([Summary("target", "the target to send the message to")] [Autocomplete(typeof(TellAutocompleteHandler))]string target, [Summary("message", "the message to send")] string message)
-    {
-            ChatMessageSender.SendTellMessage(target, message);
-            await RespondAsync($"responded to:{target} with {message}", ephemeral: true);
-            await Task.Delay(5000);
-            await DeleteOriginalResponseAsync();
-    }
+public async Task Execute(
+    [Summary("target", "the target to send the message to")] [Autocomplete(typeof(TellAutocompleteHandler))] string target,
+    [Summary("message", "the message to send")] string message)
+{
+    var success = ChatMessageSender.SendTellMessage(target, message);
+    if (success)
+        await RespondAsync($"Responded to {target} with: {message}", ephemeral: true);
+    else
+        await RespondAsync($"❌ Failed to send tell to {target}.", ephemeral: true);
+}
 }

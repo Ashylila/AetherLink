@@ -13,9 +13,10 @@ public class SendMessageCommand : InteractionModuleBase<SocketInteractionContext
     [SlashCommand("send", "Send a message to the chat")]
     public async Task Execute([Summary("message", "the message to send")] string chatmessage)
     {
-            ChatMessageSender.SendChatMessage(chatmessage);
+        var success = ChatMessageSender.SendChatMessage(chatmessage);
+        if (success)
             await RespondAsync($"Message has been sent to the chat: {chatmessage}", ephemeral: true);
-            await Task.Delay(5000);
-            await DeleteOriginalResponseAsync();
-        }
+        else
+            await RespondAsync("❌ Failed to send chat message.", ephemeral: true);
     }
+}
