@@ -3,13 +3,13 @@ name: Publish
 on:
   push:
     tags:
-      - '*.*'
+      - '*.*.*'
 
 jobs:
   Build:
     permissions:
       contents: write
-      id-token: write # 👈 Required for cosign OIDC
+      id-token: write 
     runs-on: windows-latest
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Set up .NET
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: 9.0.x
+          dotnet-version: 10.0.x
 
       - name: Download Dalamud Latest
         run: |
