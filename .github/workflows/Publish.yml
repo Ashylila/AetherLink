@@ -42,22 +42,10 @@ jobs:
       - name: Zip Plugin
         run: Compress-Archive -Path .\build\* -DestinationPath .\build\AetherLink.zip
 
-      - name: Install Cosign
-        run: |
-          curl -L https://github.com/sigstore/cosign/releases/latest/download/cosign-windows-amd64.exe -o cosign.exe
-
-      - name: Sign Plugin Zip with Cosign
-        run: |
-          .\cosign.exe sign-blob --yes `
-            --output-certificate build\AetherLink.zip.cert `
-            --output-signature build\AetherLink.zip.sig `
-            build\AetherLink.zip
-
-      - name: Publish Plugin + Signature + Cert
+    
+      - name: Publish Plugin
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./build/AetherLink.zip
-            ./build/AetherLink.zip.sig
-            ./build/AetherLink.zip.cert
           token: ${{ secrets.GITHUB_TOKEN }}
