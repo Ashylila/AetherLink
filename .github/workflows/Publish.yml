@@ -4,12 +4,18 @@ on:
   push:
     tags:
       - '*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version to build.'
+        required: false
+        default: ''
 
 jobs:
   Build:
     permissions:
       contents: write
-      id-token: write 
+      id-token: write
     runs-on: windows-latest
 
     steps:
@@ -18,17 +24,29 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Get Environment Variables
+      - name: Get Version
+        shell: pwsh
         run: |
-          $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
+          $inputTag = "${{ github.event.inputs.tag }}"
+          if (-not [string]::IsNullOrWhiteSpace($inputTag)) {
+            $tag = $inputTag
+          } else {
+            $tag = "${{ github.ref }}" -replace 'refs/tags/', ''
+          }
+
+          if ([string]::IsNullOrWhiteSpace($tag) -or $tag -like 'refs/*') {
+            throw "No valid tag/version provided. Run manually with an input tag, or push a tag like 0.93.1"
+          }
+
           "tag=$tag" | Out-File -Append -FilePath $Env:GITHUB_ENV
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 10.0.x
 
       - name: Download Dalamud Latest
+        shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
           Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\dev"
@@ -40,12 +58,14 @@ jobs:
         run: dotnet build --no-restore -c Release AetherLink/AetherLink.csproj -p:AssemblyVersion=${{ env.tag }} -p:FileVersion=${{ env.tag }} -p:PackageVersion=${{ env.tag }} -p:InformationalVersion=${{ env.tag }} --output .\build
 
       - name: Zip Plugin
-        run: Compress-Archive -Path .\build\* -DestinationPath .\build\AetherLink.zip
+        shell: pwsh
+        run: Compress-Archive -Force -Path .\build\* -DestinationPath .\build\AetherLink.zip
 
-    
       - name: Publish Plugin
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.tag }}
+          name: ${{ env.tag }}
           files: |
             ./build/AetherLink.zip
           token: ${{ secrets.GITHUB_TOKEN }}
