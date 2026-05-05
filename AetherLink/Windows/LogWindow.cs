@@ -117,6 +117,7 @@ public class LogWindow : Window, IDisposable
 
             try
             {
+                Chatlog.Clear();
                 foreach (var line in File.ReadLines(FilePath))
                 {
                     var msg = JsonSerializer.Deserialize<ChatMessage>(line);

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using AetherLink.Models;
@@ -42,12 +43,12 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
         ChatGui.ChatMessage -= OnChatMessage;
     }
 
-    private void OnChatMessage(
-        XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+    private void OnChatMessage(IHandleableChatMessage msg)
     {
-        if (!Plugin.Configuration.ChatTypes.Contains(type) || !Plugin.Configuration.IsChatLogEnabled)
+        if (!Plugin.Configuration.ChatTypes.Contains(msg.LogKind) || !Plugin.Configuration.IsChatLogEnabled)
             return;
 
+        var sender = msg.Sender;
         var playerPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
         var pureSender = playerPayload?.PlayerName ?? sender.TextValue;
         var senderWorld = playerPayload?.World.Value.Name.ExtractText() ?? "";
@@ -56,8 +57,8 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
         {
             Timestamp = DateTime.Now,
             Sender = $"{pureSender}@{senderWorld}",
-            Message = message.TextValue,
-            ChatType = type
+            Message = msg.Message.TextValue,
+            ChatType = msg.LogKind
         };
 
         ChatLog.Add(chatMessage);
@@ -66,10 +67,10 @@ public class ChatHandler(DiscordSocketClient client, Plugin plugin, IChatGui gui
         DiscordHandler.chatMessages.Add(chatMessage);
 
         var embed = new EmbedBuilder()
-            .WithAuthor($"[{type}] {pureSender}")
-            .WithDescription(message.TextValue)
+            .WithAuthor($"[{msg.LogKind}] {pureSender}")
+            .WithDescription(msg.Message.TextValue)
             .WithTimestamp(chatMessage.Timestamp)
-            .WithColor(GetColorForType(type))
+            .WithColor(GetColorForType(msg.LogKind))
             .Build();
 
         _ = Task.Run(async () =>

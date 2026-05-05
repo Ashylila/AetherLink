@@ -61,31 +61,6 @@ namespace AetherLink.Discord
                 chatGui.Print("An error occurred while starting bot.", messageTag: "AetherLink", tagColor: 51447);
             }
         }
-        
-        private async Task HandleAutoComplete(SocketAutocompleteInteraction interaction)
-        {
-            try
-            {
-                Logger.Verbose($"Auto complete received, command: {interaction.Data.CommandName}, current: {interaction.Data.Current.Name}");
-                if (interaction.Data.CommandName == "tell" && interaction.Data.Current.Name == "target")
-                {
-                    string userInput = interaction.Data.Current.Value.ToString();
-
-                    var suggestions = chatMessages.Where(message => message.Sender.StartsWith(userInput, StringComparison.OrdinalIgnoreCase)).Select(message => new AutocompleteResult(message.Sender, message.Sender)).Take(5).ToList();
-                    await interaction.RespondAsync(suggestions);
-                }
-                else if ((interaction.Data.CommandName == "addchatflag" || interaction.Data.CommandName == "removechatflag") && interaction.Data.Current.Name == "flag")
-                {
-                    string userInput = interaction.Data.Current.Value.ToString();
-                    var choices = EnumHelper.GetEnumChoices<XivChatType>().Where(flag => flag.StartsWith(userInput, StringComparison.OrdinalIgnoreCase)).Select(flag => new AutocompleteResult(flag, flag)).Take(5).ToList();
-                    await interaction.RespondAsync(choices);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error(ex, "Failed to handle auto complete");
-            }
-        }
         public void Dispose()
         {
             configuration.OnDiscordTokenChanged -= TokenChanged;

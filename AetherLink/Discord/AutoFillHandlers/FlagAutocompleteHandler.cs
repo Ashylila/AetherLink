@@ -12,11 +12,13 @@ public class FlagAutocompleteHandler : AutocompleteHandler
     public override async Task<AutocompletionResult> GenerateSuggestionsAsync(
         IInteractionContext context, IAutocompleteInteraction interaction, IParameterInfo parameter, IServiceProvider services)
     {
-        string userInput = interaction.Data.Current.Value.ToString();
-        
-        var flags = Enum.GetNames<XivChatType>().ToList().Where(x => userInput.Contains(x)).Take(5);
+        string userInput = interaction.Data.Current.Value.ToString() ?? string.Empty;
 
-        var suggestions = flags.Select(flag => new AutocompleteResult(flag, flag)).ToList();
+        var suggestions = Enum.GetNames<XivChatType>()
+            .Where(x => x.StartsWith(userInput, StringComparison.OrdinalIgnoreCase))
+            .Take(5)
+            .Select(flag => new AutocompleteResult(flag, flag))
+            .ToList();
 
         return AutocompletionResult.FromSuccess(suggestions);
     }

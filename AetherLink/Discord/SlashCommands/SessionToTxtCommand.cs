@@ -28,21 +28,24 @@ public class SessionToTxtCommand : InteractionModuleBase<SocketInteractionContex
     {
             try
             {
-                string filePath = Path.Combine(_interface.AssemblyLocation.Directory.FullName, "chatlog.txt");
-                string chatLog = File.ReadAllText(filePath);
-                List<ChatMessage> chatJson = JsonSerializer.Deserialize<List<ChatMessage>>(chatLog) ?? new List<ChatMessage>();
+                string filePath = Path.Combine(_interface.AssemblyLocation.Directory.FullName, "chatlog.ndjson");
+                if (!File.Exists(filePath))
+                {
+                    await RespondAsync("No chat log available.", ephemeral: true);
+                    return;
+                }
 
-                
                 string tempFilePath = Path.GetTempFileName();
                 await using (StreamWriter writer = new StreamWriter(tempFilePath))
                 {
-                    foreach (var message in chatJson)
+                    foreach (var line in File.ReadLines(filePath))
                     {
+                        var message = JsonSerializer.Deserialize<ChatMessage>(line);
+                        if (message == null) continue;
                         writer.WriteLine($"[{message.Timestamp}][{message.ChatType}] {message.Sender}: {message.Message}");
                     }
                 }
 
-                
                 await RespondWithFileAsync(tempFilePath, "chatlog.txt", "Here is the chat log session.");
                 File.Delete(tempFilePath);
             }
