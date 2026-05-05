@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Dalamud.NET.SDK/15.0.0">
   <PropertyGroup>
-    <Version>1.0.0</Version>
+    <Version>1.0.1.0</Version>
     <Description>Seamlessly connect your FFXIV in-game chat with Discord! Receive messages from a Discord bot directly in-game and reply using simple chat commands. Keep your Free Company, Linkshell, or party in sync, no matter where you are..</Description>
     <PackageProjectUrl>https://github.com/Ashylila/AetherLink</PackageProjectUrl>
     <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
@@ -15,8 +15,8 @@
   <Description>A plugin that connects Final Fantasy XIV in-game chat with Discord, allowing real-time message exchange between the two platforms.</Description>
   <RepoUrl>https://github.com/Ashylila/AetherLink</RepoUrl>
   <ApplicableVersion>any</ApplicableVersion>
-  <AssemblyVersion>1.0.0</AssemblyVersion>
-  <TestingAssemblyVersion>1.0.0</TestingAssemblyVersion>
+  <AssemblyVersion>1.0.1.0</AssemblyVersion>
+  <TestingAssemblyVersion>1.0.1.0</TestingAssemblyVersion>
   <Tags>Discord;Chat;Integration;FFXIV;Messaging;Communication</Tags>
   <IconUrl>https://raw.githubusercontent.com/Ashylila/AshPluggyRepo/refs/heads/main/atherlink%20(1).png</IconUrl>
   <DalamudApiLevel>15</DalamudApiLevel>
